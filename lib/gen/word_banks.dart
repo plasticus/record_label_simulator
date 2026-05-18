@@ -1,25 +1,27 @@
-final List<Map<String, dynamic>> bandPatterns = [
-  {'weight': 20, 'formula': '[Adjective] [Noun]', 'example': 'Cosmic Vipers'},
-  {'weight': 18, 'formula': '[Color] [Noun]', 'example': 'Neon Thunder'},
-  {'weight': 15, 'formula': 'The [Gerund_Verb] [Noun]', 'example': 'The Bleeding Overdrive'},
-  {'weight': 15, 'formula': 'The [Color] [Noun_Plural]', 'example': 'The Crimson Vipers'},
-  {'weight': 15, 'formula': '[Noun] [Noun]', 'example': 'Sonic Empire'},
-  {'weight': 15, 'formula': 'The [Adjective] [Noun_Plural]', 'example': 'The Cosmic Wombats'},
-  {'weight': 12, 'formula': '[Gerund_Verb] [Human_Name]', 'example': 'Screaming Johnny'},
-  {'weight': 12, 'formula': '[Adjective] [Human_Name]', 'example': 'Velvet Lemmy'},
-  {'weight': 10, 'formula': '[Human_Name] and the [Noun_Plural]', 'example': 'Roxie and the Wombats'},
-  {'weight': 10, 'formula': '[Gerund_Verb] [Noun_Plural]', 'example': 'Haunting Wombats'},
-  {'weight': 10, 'formula': '[Adverb] [Gerund_Verb] [Noun_Plural]', 'example': 'Loudly Screaming Vipers'},
-  {'weight': 8,  'formula': '[Noun] [Preposition] [Noun]', 'example': 'Overdrive From Hell'},
-  {'weight': 8,  'formula': '[Human_Name] [Noun]', 'example': 'Johnny Vipers'},
-  {'weight': 8,  'formula': 'The [Noun_Plural] Who [Adverb] [Verb]', 'example': 'The Androids Who Violently Shred'},
-  {'weight': 6,  'formula': '[Verb] The [Noun]', 'example': 'Shred The Hell'},
-  {'weight': 6,  'formula': '[Adverb] [Adjective] [Noun]', 'example': 'Accidentally Cosmic Thunder'},
-  {'weight': 5,  'formula': '[Color] [Gerund_Verb] [Noun]', 'example': 'Neon Screaming Overdrive'},
-  {'weight': 5,  'formula': '[Acronym: [Noun] [Noun] [Noun]]', 'example': 'OVH'},
-  {'weight': 4,  'formula': '[Verb] [Preposition] [Article] [Adjective] [Noun]', 'example': 'Shred On A Rusty Thunder'},
-  {'weight': 2,  'formula': '[Slam: The [Adjective] [Noun]]', 'example': 'The Cripers'},
-  {'weight': 1,  'formula': '[Number] [Noun_Plural] [Adverb_Place]', 'example': 'Three Wombats Asea'},
+final List<String> bandPatterns = [
+  'The [Adjective] [Noun_Plural]',
+  '[Adjective] [Noun]',
+  '[Color] [Noun]',
+  'The [Gerund_Verb] [Noun]',
+  'The [Color] [Noun_Plural]',
+  '[Noun] [Noun]',
+  '[Gerund_Verb] [Human_Name]',
+  '[Adjective] [Human_Name]',
+  '[Human_Name] and the [Noun_Plural]',
+  '[Gerund_Verb] [Noun_Plural]',
+  '[Adverb] [Gerund_Verb] [Noun_Plural]',
+  '[Human_Name] [Noun]',
+  'The [Noun_Plural] Who [Adverb] [Verb]',
+  'The [Noun_Plural]',
+  '[Verb] The [Noun]',
+  '[Adverb] [Adjective] [Noun]',
+  '[Color] [Gerund_Verb] [Noun]',
+  '[Number] [Noun_Plural] [Adverb_Place]',
+  '[Verb] [Preposition] [Article] [Noun]',
+  '[Noun] [Preposition] [Noun]',
+  '[First_Syllable][Second_Syllable]',
+  '[Acronym: [Noun] [Noun] [Noun]]',
+  //'[Slam: The [Adjective] [Noun]]', commenting this until I can find a better way
 ];
 
 final Map<String, List<String>> wordBanks = {
@@ -249,4 +251,16 @@ final List<String> surnames = [
   'Popescu', 'Petrov', 'Rothenstein', 'Marquardt', 'Tremblay',
   'Gagnon', 'Roy', 'Côté', 'Bouchard', 'Gauthier',
   'Morin', 'Lavoie', 'Fortin', 'Gagné',
+];
+
+
+const firstSyllables = [
+  'Ast', 'Brix', 'Crag', 'Dra', 'Eph', 'Fend', 'Glim', 'Hext', 'Id', 'Jor',
+  'Kael', 'Lox', 'Myl', 'Nova', 'Oph', 'Plax', 'Quor', 'Raz', 'Syr', 'Thra',
+  'Urb', 'Vex', 'Wyr', 'Xan', 'Yor', 'Zon'
+];
+
+const secondSyllables = [
+  'is', 'ar', 'on', 'ic', 'it', 'en', 'ax', 'or', 'ia', 'us',
+  'ek', 'um', 'lyr', 'ax', 'thos', 'odon', 'ix', 'ica', 'alon', 'eth'
 ];

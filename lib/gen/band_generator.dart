@@ -46,7 +46,6 @@ class BandGenerator {
     final genreMap = genresData[_random.nextInt(genresData.length)];
     String selectedGenre = genreMap['Genre'] as String;
 
-    // Explicitly cast these as integers!
     int minM = genreMap['minMembers'] as int;
     int maxM = genreMap['maxMembers'] as int;
 
@@ -57,52 +56,43 @@ class BandGenerator {
       members.add(_generateHumanName());
     }
 
-    int totalWeight = bandPatterns.fold(0, (sum, item) => sum + (item['weight'] as int));
-    int roll = _random.nextInt(totalWeight);
+    String finalBandName = '';
 
-    Map<String, dynamic> selectedPattern = bandPatterns.first;
-    int currentSum = 0;
-    for (var pattern in bandPatterns) {
-      currentSum += pattern['weight'] as int;
-      if (roll < currentSum) {
-        selectedPattern = pattern;
-        break;
-      }
-    }
-
-    String formula = selectedPattern['formula'] as String;
-    String finalBandName = formula;
-
-    if (formula.startsWith('[Acronym:')) {
-      String w1 = _getRandomWord('Noun');
-      String w2 = _getRandomWord('Noun');
-      String w3 = _getRandomWord('Noun');
-
-      String acronym = '${w1[0]}${w2[0]}${w3[0]}'.toUpperCase();
-      finalBandName = '$acronym ($w1 $w2 $w3)';
-
-    } else if (formula.startsWith('[Slam:')) {
-      String adj = _getRandomWord('Adjective');
-      String noun = _getRandomWord('Noun_Plural');
-
-      int cutAdj = (adj.length / 2).clamp(3, adj.length).toInt();
-      int cutNoun = (noun.length / 2).clamp(2, noun.length).toInt();
-
-      String front = adj.substring(0, cutAdj);
-      String back = noun.substring(noun.length - cutNoun);
-      String slammed = '$front$back'.toLowerCase();
-
-      slammed = slammed[0].toUpperCase() + slammed.substring(1);
-      finalBandName = 'The $slammed';
-
+    // RULE: If it's a solo artist, 75% chance they just use their human name
+    if (memberCount == 1 && _random.nextDouble() < 0.75) {
+      finalBandName = members.first.name;
     } else {
-      for (String key in wordBanks.keys) {
-        String targetTag = '[$key]';
-        while (finalBandName.contains(targetTag)) {
-          finalBandName = finalBandName.replaceFirst(targetTag, _getRandomWord(key));
+      // FLATTENED PROBABILITY: Every formula has an exact equal chance
+      String formula = bandPatterns[_random.nextInt(bandPatterns.length)];
+      finalBandName = formula;
+
+      if (formula.startsWith('[Acronym:')) {
+        String w1 = _getRandomWord('Noun');
+        String w2 = _getRandomWord('Noun');
+        String w3 = _getRandomWord('Noun');
+
+        String acronym = '${w1[0]}${w2[0]}${w3[0]}'.toUpperCase();
+        finalBandName = '$acronym ($w1 $w2 $w3)';
+
+      } else if (formula == '[First_Syllable][Second_Syllable]') {
+        // Explicitly stitch the syllables together so the loop doesn't get its tail twisted
+        String first = _getRandomWord('First_Syllable');
+        String second = _getRandomWord('Second_Syllable');
+
+        // Combine them and make sure it has a proper capital letter on front
+        String combined = '${first.toLowerCase()}$second';
+        finalBandName = combined[0].toUpperCase() + combined.substring(1);
+
+      } else {
+        // Run standard loop over tags for all other flat templates
+        for (String key in wordBanks.keys) {
+          String targetTag = '[$key]';
+          while (finalBandName.contains(targetTag)) {
+            finalBandName = finalBandName.replaceFirst(targetTag, _getRandomWord(key));
+          }
         }
       }
-    }
+    } // <--- Sweet molasses, this is the bracket that was missing!
 
     return Band(
         name: finalBandName,
