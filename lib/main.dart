@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'gen/band_generator.dart';
+import 'gen/band_gen_complex.dart';
 import 'gen/screen_band_gen_complex.dart';
+import 'gen/name_loader.dart';
 
-void main() {
+final complexGenerator = ComplexBandGenerator();
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await complexGenerator.init();
   runApp(const BandGeneratorApp());
 }
 
@@ -101,7 +107,7 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ComplexGeneratorScreen()),
+                  MaterialPageRoute(builder: (_) => ComplexGeneratorScreen(generator: complexGenerator)),
                 );
               },
               icon: const Icon(Icons.tune, color: Colors.black),

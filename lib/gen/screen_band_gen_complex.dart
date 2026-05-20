@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'band_gen_complex.dart';
 
 class ComplexGeneratorScreen extends StatefulWidget {
-  const ComplexGeneratorScreen({super.key});
+  final ComplexBandGenerator generator;
+  const ComplexGeneratorScreen({super.key, required this.generator});
 
   @override
   State<ComplexGeneratorScreen> createState() => _ComplexGeneratorScreenState();
 }
 
 class _ComplexGeneratorScreenState extends State<ComplexGeneratorScreen> {
-  final ComplexBandGenerator _generator = ComplexBandGenerator();
+  late final ComplexBandGenerator _generator = widget.generator;
 
   // null = Random for both controls
   String? _selectedGenre;
