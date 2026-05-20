@@ -1,6 +1,6 @@
 import 'dart:math';
-import 'word_banks.dart';
-import 'name_loader.dart';
+import 'patterns.dart';
+import 'asset_loader.dart';
 
 // ─── ENUMS ───────────────────────────────────────────────────────────────────
 
@@ -27,7 +27,7 @@ const int kGimmickChance   = 5;
 const int kFanClubMin      = 50;
 const int kFanClubMax      = 500;
 const int kMemberAgeMin    = 18;
-const int kMemberAgeMax    = 25;
+const int kMemberAgeMax    = 35;
 
 // ─── GENRE DATA ──────────────────────────────────────────────────────────────
 
@@ -169,13 +169,14 @@ class ComplexBand {
 
 class ComplexBandGenerator {
   final Random _random = Random();
+  AppData? _appData;
   NameGenerator? _nameGenerator;
 
   /// Must be called once before generating bands.
   /// e.g. await ComplexBandGenerator.instance.init();
   Future<void> init() async {
-    final data = await NameLoader.load();
-    _nameGenerator = NameGenerator(data);
+    _appData = await AssetLoader.load();
+    _nameGenerator = NameGenerator(_appData!);
   }
 
   static const List<String> genres = [
@@ -357,7 +358,12 @@ class ComplexBandGenerator {
     final members = _buildLineup(genre, genreName, tier);
     final skills = _buildSkills(members, tier);
     final traits = _buildTraits(genreName);
-    final name = _generateBandName();
+    // Solo artist rule: 75% chance to use the member's real name instead of a band name.
+    // AuraCore always uses a generated band name regardless of size.
+    final bool isSoloArtist = members.length == 1 && genreName != 'AuraCore';
+    final name = (isSoloArtist && _random.nextInt(100) < 75)
+        ? members.first.name
+        : _generateBandName();
 
     return ComplexBand(
       name: name,
@@ -466,13 +472,7 @@ class ComplexBandGenerator {
   }
 
   String _generateMemberName(Gender gender) {
-    // Fall back to simple name if loader hasn't been initialised yet
-    if (_nameGenerator == null) {
-      final firstNames = gender == Gender.male ? maleFirstNames : femaleFirstNames;
-      final first = firstNames[_random.nextInt(firstNames.length)];
-      final last = surnames[_random.nextInt(surnames.length)];
-      return '$first $last';
-    }
+    if (_nameGenerator == null) return gender == Gender.male ? 'Male Member' : 'Female Member';
     final result = _nameGenerator!.generate(isMale: gender == Gender.male);
     // TODO: if result.isStupid, apply +25% Motivation boost to this member
     return result.name;
@@ -556,28 +556,26 @@ class ComplexBandGenerator {
 
   String _fillPattern(String pattern) {
     if (pattern.startsWith('[Acronym:')) {
-      final words = [_pick('Noun'), _pick('Noun'), _pick('Noun')];
+      final words = [_pickBank('Noun'), _pickBank('Noun'), _pickBank('Noun')];
       final acronym = words.map((w) => w[0].toUpperCase()).join('');
       return '$acronym (${words.join(' ')})';
     }
     if (pattern.contains('[First_Syllable]')) {
-      return _pick('First_Syllable') + _pick('Second_Syllable');
+      return firstSyllables[_random.nextInt(firstSyllables.length)]
+          + secondSyllables[_random.nextInt(secondSyllables.length)];
     }
     return pattern.replaceAllMapped(RegExp(r'\[([^\]]+)\]'), (m) {
       final token = m.group(1)!;
-      return wordBanks.containsKey(token) ? _pick(token) : m.group(0)!;
+      final list = _appData?.wordBank(token) ?? [];
+      return list.isNotEmpty
+          ? list[_random.nextInt(list.length)]
+          : m.group(0)!;
     });
   }
 
-  String _pick(String category) {
-    if (category == 'First_Syllable') {
-      return firstSyllables[_random.nextInt(firstSyllables.length)];
-    }
-    if (category == 'Second_Syllable') {
-      return secondSyllables[_random.nextInt(secondSyllables.length)];
-    }
-    final list = wordBanks[category];
-    if (list == null || list.isEmpty) return '';
+  String _pickBank(String token) {
+    final list = _appData?.wordBank(token) ?? [];
+    if (list.isEmpty) return '';
     return list[_random.nextInt(list.length)];
   }
 

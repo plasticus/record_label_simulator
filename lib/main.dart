@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'gen/band_generator.dart';
 import 'gen/band_gen_complex.dart';
+import 'gen/asset_loader.dart';
 import 'gen/screen_band_gen_complex.dart';
-import 'gen/name_loader.dart';
 
 final complexGenerator = ComplexBandGenerator();
 
