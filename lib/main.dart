@@ -3,6 +3,7 @@ import 'gen/band_generator.dart';
 import 'gen/band_gen_complex.dart';
 import 'gen/asset_loader.dart';
 import 'gen/screen_band_gen_complex.dart';
+import 'gen/screen_surname_test.dart';
 
 final complexGenerator = ComplexBandGenerator();
 
@@ -130,6 +131,40 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 16),
             const Text(
               'Coming soon',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white38, fontSize: 12),
+            ),
+
+            const SizedBox(height: 40),
+
+            // --- Button 3: Surname Test ---
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SurnameTestScreen()),
+                );
+              },
+              icon: const Icon(Icons.science, color: Colors.black),
+              label: const Text(
+                'SURNAME TEST',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                  color: Colors.black,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.tealAccent,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '5 names per generation method',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white38, fontSize: 12),
             ),

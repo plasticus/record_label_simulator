@@ -28,6 +28,7 @@ const List<String> bandPatterns = [
   '[First_Syllable][Second_Syllable]',                              // Kaelic
   '[Adjective] [First_Syllable][Second_Syllable]',                  // Savage Novon
   'The [First_Syllable][Second_Syllable] [First_Syllable][Second_Syllable]', // The Razeth Glimor
+  'The [First_Syllable][Second_Syllable] [Noun]', // The Elthum Earthquake
   '[Acronym: [Noun] [Noun] [Noun]]',       // VHR (Venom Havoc Reckoning)
 ];
 

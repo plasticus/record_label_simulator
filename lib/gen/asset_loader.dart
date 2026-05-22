@@ -13,6 +13,11 @@ class AppData {
   final List<String> stupidMale;
   final List<String> stupidFemale;
 
+  // Combinatorial surname parts
+  final List<String> cPrefixes;
+  final List<String> cRoots;
+  final List<String> cSuffixes;
+
   // Band name word banks
   final List<String> adjectives;
   final List<String> nouns;
@@ -34,6 +39,9 @@ class AppData {
     required this.suffixes,
     required this.stupidMale,
     required this.stupidFemale,
+    required this.cPrefixes,
+    required this.cRoots,
+    required this.cSuffixes,
     required this.adjectives,
     required this.nouns,
     required this.nounsPlural,
@@ -88,6 +96,11 @@ class AssetLoader {
       suffixes:       _col(nameData, 'Suffix'),
       stupidMale:     _col(nameData, 'StupidM'),
       stupidFemale:   _col(nameData, 'StupidF'),
+
+      // ── Combinatorial surname parts ──
+      cPrefixes: _col(nameData, 'c_prefix'),
+      cRoots:    _col(nameData, 'c_root'),
+      cSuffixes: _col(nameData, 'c_suffix'),
 
       // ── Band name words ──
       adjectives:   _col(bandData, 'Adjectives'),
