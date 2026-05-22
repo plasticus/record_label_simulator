@@ -5,13 +5,13 @@ import 'asset_loader.dart';
 // Adjust these to tune the mix of surname types in production.
 // All four should add up to 100.
 
-const int kSurnameDirectChance      = 25;  // Pull straight from Surname list
-const int kSurnameHyphenRealChance  = 25;  // Hyphenate two real surnames
-const int kSurnameAssembledChance   = 25;  // Build from prefix/root/suffix
-const int kSurnameHyphenAsmChance   = 25;  // Hyphenate two assembled surnames
+const int kSurnameDirectChance      = 40;  // Pull straight from Surname list
+const int kSurnameHyphenRealChance  = 10;  // Hyphenate two real surnames
+const int kSurnameAssembledChance   = 40;  // Build from prefix/root/suffix
+const int kSurnameHyphenAsmChance   = 10;  // Hyphenate two assembled surnames
 
 /// Max character length for a single assembled surname component (before hyphenation).
-const int kAssembledMaxLength = 14;
+const int kAssembledMaxLength = 12;
 
 /// Chance (0-100) that an assembled name includes a root between prefix and suffix.
 const int kRootInclusionChance = 40;

@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/services.dart';
+import 'gen_human_names.dart';
 
 // ─── APP DATA ────────────────────────────────────────────────────────────────
 
@@ -20,6 +21,8 @@ class AppData {
 
   // Band name word banks
   final List<String> adjectives;
+  final List<String> creatureNouns;
+  final List<String> situationPhrases;
   final List<String> nouns;
   final List<String> nounsPlural;
   final List<String> gerundVerbs;
@@ -43,6 +46,8 @@ class AppData {
     required this.cRoots,
     required this.cSuffixes,
     required this.adjectives,
+    required this.creatureNouns,
+    required this.situationPhrases,
     required this.nouns,
     required this.nounsPlural,
     required this.gerundVerbs,
@@ -69,6 +74,8 @@ class AppData {
       case 'Human_Name':   return humanNames;
       case 'Adverb_Place': return adverbPlace;
       case 'Adverb':       return adverbs;
+      case 'Creature_Noun':  return creatureNouns;
+      case 'Situation_Phrase': return situationPhrases;
       case 'Number':       return adjectives; // Numbers live in Adjectives column
       default:             return [];
     }
@@ -104,13 +111,15 @@ class AssetLoader {
 
       // ── Band name words ──
       adjectives:   _col(bandData, 'Adjectives'),
+      creatureNouns:  _col(bandData, 'creature_noun'),
+      situationPhrases: _col(bandData, 'situation_phrase'),
       nouns:        _col(bandData, 'Nouns'),
       nounsPlural:  _col(bandData, 'Nouns_Plural'),
       gerundVerbs:  _col(bandData, 'Gerund_Verbs'),
       verbs:        _col(bandData, 'Verbs'),
       prepositions: _col(bandData, 'Prepositions'),
       articles:     _col(bandData, 'Articles'),
-      colors:       _col(bandData, 'Colors'),
+      colors:       _col(bandData, 'Adjectives'),  // Colors merged into Adjectives column
       humanNames:   _col(bandData, 'Human_Names'),
       adverbPlace:  _col(bandData, 'adverb_place'),
       adverbs:      _col(bandData, 'adverb'),
@@ -163,8 +172,9 @@ const int kAllInitialsChance   = 1;   // % chance of "L. R. Bubbard" style
 class NameGenerator {
   final Random _random = Random();
   final AppData _data;
+  final SurnameGenerator _surnameGen;
 
-  NameGenerator(this._data);
+  NameGenerator(this._data, this._surnameGen);
 
   bool _roll(int chance) => _random.nextInt(100) < chance;
   String _pick(List<String> list) => list[_random.nextInt(list.length)];
@@ -172,7 +182,7 @@ class NameGenerator {
   ({String name, bool isStupid}) generate({required bool isMale}) {
     final firstNames  = isMale ? _data.maleFirst  : _data.femaleFirst;
     final stupidNames = isMale ? _data.stupidMale : _data.stupidFemale;
-    final surname     = _pick(_data.surnames);
+    final surname     = _surnameGen.generate();
 
     // --- STEP 1: STUPID NAME (wins over all initials) ---
     if (_roll(kStupidNameChance)) {

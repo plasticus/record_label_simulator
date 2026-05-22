@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'patterns.dart';
 import 'asset_loader.dart';
+import 'gen_human_names.dart';
 
 // ─── ENUMS ───────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,14 @@ extension GimmickTypeLabel on GimmickType {
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
 const int kGimmickChance   = 5;
+
+/// Prepositions that make logical sense in creature/situation band name patterns.
+/// e.g. "Yeti On A Budget", "Kraken Against A Tribunal"
+const List<String> creaturePrepositions = [
+  'On', 'With', 'Without', 'Against', 'Beyond',
+  'Before', 'After', 'Under', 'Over', 'Through',
+  'During', 'Across', 'Within', 'Amid',
+];
 const int kFanClubMin      = 50;
 const int kFanClubMax      = 500;
 const int kMemberAgeMin    = 18;
@@ -176,7 +185,8 @@ class ComplexBandGenerator {
   /// e.g. await ComplexBandGenerator.instance.init();
   Future<void> init() async {
     _appData = await AssetLoader.load();
-    _nameGenerator = NameGenerator(_appData!);
+    final surnameGen = SurnameGenerator(_appData!);
+    _nameGenerator = NameGenerator(_appData!, surnameGen);
   }
 
   static const List<String> genres = [
@@ -552,9 +562,10 @@ class ComplexBandGenerator {
   // ─── BAND NAME ───────────────────────────────────────────────────────────
 
   String _generateBandName() =>
-      _fillPattern(bandPatterns[_random.nextInt(bandPatterns.length)]);
+      generateBandNameFromPattern(bandPatterns[_random.nextInt(bandPatterns.length)]);
 
-  String _fillPattern(String pattern) {
+  /// Public so the band name test screen can call it with a specific pattern.
+  String generateBandNameFromPattern(String pattern) {
     if (pattern.startsWith('[Acronym:')) {
       final words = [_pickBank('Noun'), _pickBank('Noun'), _pickBank('Noun')];
       final acronym = words.map((w) => w[0].toUpperCase()).join('');
@@ -564,13 +575,34 @@ class ComplexBandGenerator {
       return firstSyllables[_random.nextInt(firstSyllables.length)]
           + secondSyllables[_random.nextInt(secondSyllables.length)];
     }
-    return pattern.replaceAllMapped(RegExp(r'\[([^\]]+)\]'), (m) {
+
+    // Creature pattern gets special handling for preposition and article agreement
+    if (pattern.contains('[Creature_Noun]') && pattern.contains('[Situation_Noun]')) {
+      return _buildCreatureName();
+    }
+
+    final name = pattern.replaceAllMapped(RegExp(r'\[([^\]]+)\]'), (m) {
       final token = m.group(1)!;
       final list = _appData?.wordBank(token) ?? [];
       return list.isNotEmpty
           ? list[_random.nextInt(list.length)]
           : m.group(0)!;
     });
+    // Append acronym for names with 4+ words
+    final words = name.split(' ');
+    if (words.length >= 4) {
+      final acronym = words.map((w) => w[0].toUpperCase()).join('');
+      return '$name ($acronym)';
+    }
+    return name;
+  }
+
+  /// Builds a creature/situation name.
+  /// e.g. "Yeti On a Budget", "Manticore With a Grievance"
+  String _buildCreatureName() {
+    final creature = _pickBank('Creature_Noun');
+    final phrase   = _pickBank('Situation_Phrase');
+    return '$creature $phrase';
   }
 
   String _pickBank(String token) {
@@ -578,6 +610,9 @@ class ComplexBandGenerator {
     if (list.isEmpty) return '';
     return list[_random.nextInt(list.length)];
   }
+
+  /// Exposes random index for external use (e.g. test screens picking patterns).
+  int randomIndex(int max) => _random.nextInt(max);
 
   // ─── STAT HELPERS ────────────────────────────────────────────────────────
 
