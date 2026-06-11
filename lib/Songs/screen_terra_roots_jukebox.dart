@@ -1,9 +1,12 @@
-// Line above: library screen_terra_roots_jukebox;
-import 'package:flutter/material.dart';
+// Line above: // Top of file
+import 'package:flutter/material.dart'; // This line right here prevents all 64 errors!
 import 'terra_roots_songs.dart';
+import '../gen/band_gen_complex.dart';
 
 class TerraRootsJukeboxScreen extends StatefulWidget {
-  const TerraRootsJukeboxScreen({super.key});
+  final ComplexBandGenerator generator;
+
+  const TerraRootsJukeboxScreen({super.key, required this.generator});
 
   @override
   State<TerraRootsJukeboxScreen> createState() => _TerraRootsJukeboxScreenState();
@@ -12,11 +15,17 @@ class TerraRootsJukeboxScreen extends StatefulWidget {
 class _TerraRootsJukeboxScreenState extends State<TerraRootsJukeboxScreen> {
   final SongNameGenerator _songGenerator = SongNameGenerator();
   String _currentTrackTitle = "SYSTEM INITIALIZED // NO TRACK SELECTED";
+  String _currentArtist = "";
   bool _hasSpun = false;
 
   void _spinJukebox() {
     setState(() {
       _currentTrackTitle = _songGenerator.generateSongTitle().toUpperCase();
+
+      // Pulling authentic pattern identities from your core asset generator
+      final generatedBand = widget.generator.generate();
+      _currentArtist = "BY: ${generatedBand.name.toUpperCase()}";
+
       _hasSpun = true;
     });
   }
@@ -58,23 +67,40 @@ class _TerraRootsJukeboxScreenState extends State<TerraRootsJukeboxScreen> {
                 ),
                 boxShadow: _hasSpun ? [
                   BoxShadow(
-                    // Fixed the deprecated precision-loss warning here:
                     color: Colors.greenAccent.withValues(alpha: 0.1),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   )
                 ] : null,
               ),
-              child: Text(
-                _currentTrackTitle,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _hasSpun ? Colors.greenAccent : Colors.white54,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  fontFamily: 'monospace',
-                ),
+              child: Column(
+                children: [
+                  Text(
+                    _currentTrackTitle,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _hasSpun ? Colors.greenAccent : Colors.white54,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                  if (_hasSpun) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _currentArtist,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.amberAccent,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 1.5,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             const SizedBox(height: 48),
@@ -116,4 +142,4 @@ class _TerraRootsJukeboxScreenState extends State<TerraRootsJukeboxScreen> {
     );
   }
 }
-// Line below: // End of TerraRootsJukeboxScreen
+// Line below: // End of file

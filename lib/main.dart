@@ -176,7 +176,9 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const TerraRootsJukeboxScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => TerraRootsJukeboxScreen(generator: complexGenerator),
+                  ),
                 );
               },
               icon: const Icon(Icons.radio, color: Colors.black),
