@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'terra_roots_songs.dart';
 import 'glitch_hop_songs.dart';
+import 'rust_beat_songs.dart';
+import 'klangor_songs.dart';
 import '../gen/band_gen_complex.dart';
 
 class TerraRootsJukeboxScreen extends StatefulWidget {
@@ -18,6 +20,8 @@ class TerraRootsJukeboxScreen extends StatefulWidget {
 class _TerraRootsJukeboxScreenState extends State<TerraRootsJukeboxScreen> {
   final SongNameGenerator _countryGenerator = SongNameGenerator();
   final GlitchHopGenerator _glitchGenerator = GlitchHopGenerator();
+  final RustBeatGenerator _rustGenerator = RustBeatGenerator();
+  final KlangorGenerator _klangorGenerator = KlangorGenerator();
   final Random _genreRandom = Random();
 
   String _currentTrackTitle = "SYSTEM INITIALIZED\n// READY TO SPIN";
@@ -47,21 +51,26 @@ class _TerraRootsJukeboxScreenState extends State<TerraRootsJukeboxScreen> {
 
   Future<void> _spinJukebox() async {
     // 50/50 coin flip to determine our sonic vector genre orientation
-    final isGlitchHop = _genreRandom.nextBool();
+    final genreRoll = _genreRandom.nextInt(4);
 
     String generatedTitle;
     String genreTag;
 
-    if (isGlitchHop) {
+    if (genreRoll == 0) {
       generatedTitle = _glitchGenerator.generateGlitchHopTitle().toUpperCase();
       genreTag = "[GLITCH-HOP] ";
-    } else {
+    } else if (genreRoll == 1) {
       generatedTitle = _countryGenerator.generateSongTitle().toUpperCase();
       genreTag = "[TERRA-ROOTS] ";
+    } else if (genreRoll == 2) {
+      generatedTitle = _rustGenerator.generateRustBeatTitle().toUpperCase();
+      genreTag = "[RUST-BEAT] ";
+    } else {
+      generatedTitle = _klangorGenerator.generateKlangorTitle().toUpperCase();
+      genreTag = "[KLANGOR] ";
     }
 
     final generatedBand = widget.generator.generate();
-    // Prepend the genre tag right into the artist metadata display line
     final generatedArtist = "$genreTag BY: ${generatedBand.name.toUpperCase()}";
 
     setState(() {
