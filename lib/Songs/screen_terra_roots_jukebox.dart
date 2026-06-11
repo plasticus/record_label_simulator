@@ -1,6 +1,9 @@
 // Line above: // Top of file
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'terra_roots_songs.dart';
+import 'glitch_hop_songs.dart';
 import '../gen/band_gen_complex.dart';
 
 class TerraRootsJukeboxScreen extends StatefulWidget {
@@ -13,21 +16,64 @@ class TerraRootsJukeboxScreen extends StatefulWidget {
 }
 
 class _TerraRootsJukeboxScreenState extends State<TerraRootsJukeboxScreen> {
-  final SongNameGenerator _songGenerator = SongNameGenerator();
+  final SongNameGenerator _countryGenerator = SongNameGenerator();
+  final GlitchHopGenerator _glitchGenerator = GlitchHopGenerator();
+  final Random _genreRandom = Random();
+
   String _currentTrackTitle = "SYSTEM INITIALIZED\n// READY TO SPIN";
   String _currentArtist = "";
   bool _hasSpun = false;
 
-  void _spinJukebox() {
+  @override
+  void initState() {
+    super.initState();
+    _loadPersistentTrack();
+  }
+
+  // Reads the persistent hardware state storage vector
+  Future<void> _loadPersistentTrack() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rawTrack = prefs.getString('cached_jukebox_track');
+
+    if (rawTrack != null) {
+      final savedTrack = TrackMetadata.fromRawString(rawTrack);
+      setState(() {
+        _currentTrackTitle = savedTrack.title;
+        _currentArtist = savedTrack.artist;
+        _hasSpun = true;
+      });
+    }
+  }
+
+  Future<void> _spinJukebox() async {
+    // 50/50 coin flip to determine our sonic vector genre orientation
+    final isGlitchHop = _genreRandom.nextBool();
+
+    String generatedTitle;
+    String genreTag;
+
+    if (isGlitchHop) {
+      generatedTitle = _glitchGenerator.generateGlitchHopTitle().toUpperCase();
+      genreTag = "[GLITCH-HOP] ";
+    } else {
+      generatedTitle = _countryGenerator.generateSongTitle().toUpperCase();
+      genreTag = "[TERRA-ROOTS] ";
+    }
+
+    final generatedBand = widget.generator.generate();
+    // Prepend the genre tag right into the artist metadata display line
+    final generatedArtist = "$genreTag BY: ${generatedBand.name.toUpperCase()}";
+
     setState(() {
-      _currentTrackTitle = _songGenerator.generateSongTitle().toUpperCase();
-
-      // Pulling authentic pattern identities from your core asset generator
-      final generatedBand = widget.generator.generate();
-      _currentArtist = "BY: ${generatedBand.name.toUpperCase()}";
-
+      _currentTrackTitle = generatedTitle;
+      _currentArtist = generatedArtist;
       _hasSpun = true;
     });
+
+    // Commit to persistent local storage hardware cache
+    final prefs = await SharedPreferences.getInstance();
+    final trackData = TrackMetadata(title: generatedTitle, artist: generatedArtist);
+    await prefs.setString('cached_jukebox_track', trackData.toRawString());
   }
 
   @override
@@ -44,7 +90,7 @@ class _TerraRootsJukeboxScreenState extends State<TerraRootsJukeboxScreen> {
             ),
           ),
 
-          // Line above:           // LAYER 2: Semi-opaque scrim overlay to ensure UI elements stay highly readable
+          // LAYER 2: Semi-opaque scrim overlay to ensure UI elements stay highly readable
           Positioned.fill(
             child: Container(
               color: Colors.black.withValues(alpha: 0.1),

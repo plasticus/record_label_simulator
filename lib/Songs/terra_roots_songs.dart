@@ -53,4 +53,27 @@ class SongNameGenerator {
         }
     }
 }
-// Line below: // End of SongNameGenerator class
+// Line above:             default:
+//                 return "$tech $noun of $action";
+//         }
+//     }
+// } <-- This closing brace MUST completely end the SongNameGenerator class
+
+class TrackMetadata {
+    final String title;
+    final String artist;
+
+    TrackMetadata({required this.title, required this.artist});
+
+    // Simple string serialization to store as a single string line
+    String toRawString() => "$title|||$artist";
+
+    factory TrackMetadata.fromRawString(String raw) {
+        final parts = raw.split("||?");
+        return TrackMetadata(
+            title: parts[0],
+            artist: parts.length > 1 ? parts[1] : "",
+        );
+    }
+}
+// Line below:
