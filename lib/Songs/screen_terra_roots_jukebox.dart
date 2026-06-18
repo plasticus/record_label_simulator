@@ -6,10 +6,10 @@ import 'terra_roots_songs.dart';
 import 'glitch_hop_songs.dart';
 import 'rust_beat_songs.dart';
 import 'klangor_songs.dart';
-import '../gen/band_gen_complex.dart';
+import '../generators/band_generator.dart';
 
 class TerraRootsJukeboxScreen extends StatefulWidget {
-  final ComplexBandGenerator generator;
+  final BandGenerator generator;
 
   const TerraRootsJukeboxScreen({super.key, required this.generator});
 
