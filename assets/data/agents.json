@@ -1,0 +1,110 @@
+{
+  "band_managers": [
+    {
+      "name": "Talia Vance",
+      "salary": 4200.0,
+      "morale": 78.0,
+      "personality": "passionate",
+      "traits": ["battleHardened", "bandLoyal"],
+      "bio": "Talia uses her commanding presence and rock-solid mental stamina to keep the label's most volatile, high-ego rockstars completely in line during grueling interplanetary tours. Her weaker business acumen means she occasionally overlooks optimal touring margins, but her high resolve ensures she survives high-stakes crises without breaking a sweat.",
+      "skills": {
+        "acumen": 35.0,
+        "insight": 50.0,
+        "resolve": 92.0,
+        "presence": 81.0,
+        "execution": 40.0,
+        "network": 55.0
+      }
+    }
+  ],
+  "ar_agents": [
+    {
+      "name": "Jax Teller",
+      "salary": 3800.0,
+      "morale": 65.0,
+      "personality": "trendjacker",
+      "traits": ["talentWhisperer"],
+      "bio": "Jax has an exceptional creative radar and an expansive network that lets him consistently discover underground talent before other labels even know they exist. His poor technical execution means he struggles to package raw bands cleanly for the studio — pair him with a strong Production Director and he's dangerous.",
+      "skills": {
+        "acumen": 45.0,
+        "insight": 88.0,
+        "resolve": 52.0,
+        "presence": 60.0,
+        "execution": 31.0,
+        "network": 74.0
+      }
+    }
+  ],
+  "creative_directors": [
+    {
+      "name": "Vesper Okafor",
+      "salary": 5100.0,
+      "morale": 71.0,
+      "personality": "visionary",
+      "traits": ["awardPedigree"],
+      "bio": "Vesper built her reputation producing holographic sleeve art for three consecutive Lunar Grammy winners, and she brings that same obsessive aesthetic vision to every project. Her weakness is speed — she won't rush a creative concept no matter how tight the release window, which puts her on a collision course with any band trying to drop on a deadline.",
+      "skills": {
+        "acumen": 38.0,
+        "insight": 91.0,
+        "resolve": 44.0,
+        "presence": 72.0,
+        "execution": 85.0,
+        "network": 49.0
+      }
+    }
+  ],
+  "marketing_directors": [
+    {
+      "name": "Dirk Vance",
+      "salary": 5600.0,
+      "morale": 55.0,
+      "personality": "confrontational",
+      "traits": ["dealmaker"],
+      "bio": "Dirk's massive charisma and sharp trend-spotting let him pitch and lock down incredibly lucrative corporate brand deals for your top artists. His limited network bottlenecks organic promotional reach, and his low resolve means he cracks badly when campaigns face public backlash — keep the heat off him and he prints money.",
+      "skills": {
+        "acumen": 78.0,
+        "insight": 81.0,
+        "resolve": 22.0,
+        "presence": 89.0,
+        "execution": 65.0,
+        "network": 15.0
+      }
+    }
+  ],
+  "production_directors": [
+    {
+      "name": "Silas Thorne",
+      "salary": 4900.0,
+      "morale": 82.0,
+      "personality": "cutthroat",
+      "traits": ["selfStarter"],
+      "bio": "Silas possesses a masterfully efficient corporate mind, ruthlessly trimming studio overhead and streamlining merch pipelines to maximize margins. His atrocious creative intuition means he genuinely cannot tell a great song from white noise — point him at the right project and get out of the way, but never let him pick the project himself.",
+      "skills": {
+        "acumen": 95.0,
+        "insight": 20.0,
+        "resolve": 70.0,
+        "presence": 42.0,
+        "execution": 85.0,
+        "network": 33.0
+      }
+    }
+  ],
+  "legal_directors": [
+    {
+      "name": "Elena Cruz",
+      "salary": 6200.0,
+      "morale": 88.0,
+      "personality": "steadfast",
+      "traits": ["ironclad"],
+      "bio": "Elena leverages sharp legal intelligence and clean technical execution to draft ironclad recording contracts and swiftly dismantle algorithmic AI piracy rings targeting your catalog. Her average presence means she won't easily bully opposing counsel in a room, but her sky-high acumen ensures the label is always protected when things get messy.",
+      "skills": {
+        "acumen": 91.0,
+        "insight": 40.0,
+        "resolve": 65.0,
+        "presence": 50.0,
+        "execution": 78.0,
+        "network": 62.0
+      }
+    }
+  ]
+}

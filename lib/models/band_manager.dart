@@ -1,6 +1,11 @@
 // lib/models/band_manager.dart
 
+import 'dart:convert';
+
+import 'package:flutter/services.dart' show rootBundle;
+
 import '../generators/band_generator.dart';
+import 'agent.dart'; // AgentSkills lives here now
 
 // ---------------------------------------------------------------------------
 // Enums
@@ -72,121 +77,49 @@ enum ManagerTrait {
 }
 
 // ---------------------------------------------------------------------------
-// AgentSkills — shared stat block, reusable by other agent types later
+// JSON parsers
 // ---------------------------------------------------------------------------
 
-/// The six core competency scores that drive agent effectiveness.
-/// All values are in the range 0–100.
-class AgentSkills {
-  /// Corporate and financial navigation.
-  final double acumen;
-
-  /// Spotting raw talent and reading creative trends.
-  final double insight;
-
-  /// Mental stamina; resistance to burnout and in-game crises.
-  final double resolve;
-
-  /// Charisma, clout, and persuasive power.
-  final double presence;
-
-  /// Technical ability to deliver polished, high-quality output.
-  final double execution;
-
-  /// Depth of industry contacts and connections.
-  final double network;
-
-  const AgentSkills({
-    required this.acumen,
-    required this.insight,
-    required this.resolve,
-    required this.presence,
-    required this.execution,
-    required this.network,
-  });
-
-  /// Clamps every skill to [0, 100] on construction — safety net for
-  /// generators that add/subtract deltas without bounds-checking.
-  factory AgentSkills.clamped({
-    required double acumen,
-    required double insight,
-    required double resolve,
-    required double presence,
-    required double execution,
-    required double network,
-  }) {
-    double c(double v) => v.clamp(0.0, 100.0);
-    return AgentSkills(
-      acumen: c(acumen),
-      insight: c(insight),
-      resolve: c(resolve),
-      presence: c(presence),
-      execution: c(execution),
-      network: c(network),
-    );
+/// Maps a JSON string to [ManagerPersonality].
+/// Falls back to [ManagerPersonality.steadfast] for any unrecognised value
+/// so a typo in the data file doesn't crash the app.
+ManagerPersonality _personalityFromString(String value) {
+  switch (value) {
+    case 'lazy':             return ManagerPersonality.lazy;
+    case 'confrontational':  return ManagerPersonality.confrontational;
+    case 'yesMan':           return ManagerPersonality.yesMan;
+    case 'cutthroat':        return ManagerPersonality.cutthroat;
+    case 'passionate':       return ManagerPersonality.passionate;
+    case 'steadfast':        return ManagerPersonality.steadfast;
+    case 'trendjacker':      return ManagerPersonality.trendjacker;
+    case 'nurturing':        return ManagerPersonality.nurturing;
+    default:                 return ManagerPersonality.steadfast;
   }
+}
 
-  /// Returns a copy with any number of fields overridden.
-  AgentSkills copyWith({
-    double? acumen,
-    double? insight,
-    double? resolve,
-    double? presence,
-    double? execution,
-    double? network,
-  }) {
-    return AgentSkills(
-      acumen: acumen ?? this.acumen,
-      insight: insight ?? this.insight,
-      resolve: resolve ?? this.resolve,
-      presence: presence ?? this.presence,
-      execution: execution ?? this.execution,
-      network: network ?? this.network,
-    );
+/// Maps a JSON string to a [ManagerTrait], or `null` if unrecognised.
+/// Callers filter out nulls so bad data is silently skipped.
+ManagerTrait? _traitFromString(String value) {
+  switch (value) {
+    case 'battleHardened':       return ManagerTrait.battleHardened;
+    case 'dealmaker':            return ManagerTrait.dealmaker;
+    case 'talentWhisperer':      return ManagerTrait.talentWhisperer;
+    case 'bandLoyal':            return ManagerTrait.bandLoyal;
+    case 'selfStarter':          return ManagerTrait.selfStarter;
+    case 'unreliable':           return ManagerTrait.unreliable;
+    case 'inflatedExpectations': return ManagerTrait.inflatedExpectations;
+    case 'fragileEgo':           return ManagerTrait.fragileEgo;
+    case 'abrasive':             return ManagerTrait.abrasive;
+    case 'toxicReputation':      return ManagerTrait.toxicReputation;
+    default:                     return null;
   }
-
-  /// Rough overall rating; useful for UI sorting and difficulty scaling.
-  double get overallRating =>
-      (acumen + insight + resolve + presence + execution + network) / 6.0;
-
-  @override
-  String toString() =>
-      'AgentSkills(acumen: $acumen, insight: $insight, resolve: $resolve, '
-          'presence: $presence, execution: $execution, network: $network)';
 }
 
 // ---------------------------------------------------------------------------
 // BandManager
 // ---------------------------------------------------------------------------
 
-class BandManager {
-  // ── Identity ───────────────────────────────────────────────────────────────
-
-  final String name;
-
-  // ── Financials ─────────────────────────────────────────────────────────────
-
-  /// Monthly salary cost to the label, in whatever in-game currency unit is
-  /// settled on later. Stored as a double to match other currency fields.
-  final double salary;
-
-  // ── Wellbeing ──────────────────────────────────────────────────────────────
-
-  /// Current mood / morale. Range 0–100.
-  /// Low morale triggers confrontational mini-games and skill debuffs.
-  final double morale;
-
-  // ── Competency ─────────────────────────────────────────────────────────────
-
-  final AgentSkills skills;
-
-  // ── Character ──────────────────────────────────────────────────────────────
-
-  final ManagerPersonality personality;
-
-  /// Traits accumulated (positively or negatively) through gameplay events.
-  final List<ManagerTrait> traits;
-
+class BandManager extends Agent<ManagerPersonality, ManagerTrait> {
   // ── Roster ─────────────────────────────────────────────────────────────────
 
   /// Bands currently under this manager's care. Mutable during a playthrough;
@@ -197,16 +130,19 @@ class BandManager {
   // ── Constructor ────────────────────────────────────────────────────────────
 
   BandManager({
-    required this.name,
-    required this.salary,
+    required super.name,
+    required super.salary,
     required double morale,
-    required this.skills,
-    required this.personality,
+    required super.skills,
+    required super.personality,
+    required super.bio,
     List<ManagerTrait> traits = const [],
     List<Band> assignedBands = const [],
-  })  : morale = morale.clamp(0.0, 100.0),
-        traits = List.unmodifiable(traits),
-        _assignedBands = List<Band>.from(assignedBands);
+  })  : _assignedBands = List<Band>.from(assignedBands),
+        super(
+        morale: morale.clamp(0.0, 100.0),
+        traits: List.unmodifiable(traits),
+      );
 
   // ── Roster helpers ─────────────────────────────────────────────────────────
 
@@ -237,6 +173,7 @@ class BandManager {
 
   // ── copyWith ───────────────────────────────────────────────────────────────
 
+  @override
   BandManager copyWith({
     String? name,
     double? salary,
@@ -244,25 +181,48 @@ class BandManager {
     AgentSkills? skills,
     ManagerPersonality? personality,
     List<ManagerTrait>? traits,
+    String? bio,
+    // BandManager-specific
     List<Band>? assignedBands,
   }) {
     return BandManager(
-      name: name ?? this.name,
-      salary: salary ?? this.salary,
-      morale: morale ?? this.morale,
-      skills: skills ?? this.skills,
-      personality: personality ?? this.personality,
-      traits: traits ?? this.traits,
+      name:          name          ?? this.name,
+      salary:        salary        ?? this.salary,
+      morale:        morale        ?? this.morale,
+      skills:        skills        ?? this.skills,
+      personality:   personality   ?? this.personality,
+      traits:        traits        ?? this.traits,
+      bio:           bio           ?? this.bio,
       assignedBands: assignedBands ?? _assignedBands,
     );
   }
 
   // ── Convenience getters ────────────────────────────────────────────────────
 
-  /// Shorthand for the Rogue's Gallery overview card.
-  bool get isUnderPerforming => skills.overallRating < 40.0;
-  bool get isBurningOut => morale < 25.0;
+  // isUnderPerforming and isBurningOut are inherited from Agent.
+
   int get rosterSize => _assignedBands.length;
+
+  // ── fromJson ───────────────────────────────────────────────────────────────
+
+  factory BandManager.fromJson(Map<String, dynamic> json) {
+    final rawTraits = (json['traits'] as List<dynamic>? ?? [])
+        .cast<String>()
+        .map(_traitFromString)
+        .whereType<ManagerTrait>() // silently drops any null (unrecognised) values
+        .toList();
+
+    return BandManager(
+      name:          json['name']        as String,
+      salary:        (json['salary']     as num).toDouble(),
+      morale:        (json['morale']     as num).toDouble(),
+      personality:   _personalityFromString(json['personality'] as String),
+      traits:        rawTraits,
+      assignedBands: const [],           // populated at runtime, not from JSON
+      skills:        AgentSkills.fromJson(json['skills'] as Map<String, dynamic>),
+      bio:           json['bio']         as String? ?? '',
+    );
+  }
 
   // ── Debug ──────────────────────────────────────────────────────────────────
 
@@ -277,4 +237,20 @@ class BandManager {
           'bands: ${_assignedBands.map((b) => b.name).toList()}, '
           'skills: $skills'
           ')';
+}
+
+// ---------------------------------------------------------------------------
+// Asset loader
+// ---------------------------------------------------------------------------
+
+/// Reads `assets/data/band_managers.json` and returns a typed list.
+/// Call once at startup (e.g. in your AgentGallery initState) and cache
+/// the result — don't call on every build.
+Future<List<BandManager>> loadBandManagers() async {
+  final raw  = await rootBundle.loadString('assets/data/band_managers.json');
+  final list = json.decode(raw) as List<dynamic>;
+  return list
+      .cast<Map<String, dynamic>>()
+      .map(BandManager.fromJson)
+      .toList();
 }
