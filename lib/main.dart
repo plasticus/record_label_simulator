@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'generators/band_generator.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/gallery/agent_gallery_screen.dart';
@@ -18,7 +19,7 @@ void main() async {
     statusBarIconBrightness: Brightness.light,
   ));
   await bandGenerator.init();
-  runApp(const SonicEmpireApp());
+  runApp(const ProviderScope(child: SonicEmpireApp()));
 }
 
 class SonicEmpireApp extends StatelessWidget {
