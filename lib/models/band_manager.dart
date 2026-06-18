@@ -1,5 +1,9 @@
 // lib/models/band_manager.dart
 
+import 'dart:convert';
+
+import 'package:flutter/services.dart' show rootBundle;
+
 import '../generators/band_generator.dart';
 
 // ---------------------------------------------------------------------------
@@ -153,6 +157,56 @@ class AgentSkills {
   String toString() =>
       'AgentSkills(acumen: $acumen, insight: $insight, resolve: $resolve, '
           'presence: $presence, execution: $execution, network: $network)';
+
+  factory AgentSkills.fromJson(Map<String, dynamic> json) {
+    return AgentSkills(
+      acumen:    (json['acumen']    as num).toDouble(),
+      insight:   (json['insight']   as num).toDouble(),
+      resolve:   (json['resolve']   as num).toDouble(),
+      presence:  (json['presence']  as num).toDouble(),
+      execution: (json['execution'] as num).toDouble(),
+      network:   (json['network']   as num).toDouble(),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// JSON parsers
+// ---------------------------------------------------------------------------
+
+/// Maps a JSON string to [ManagerPersonality].
+/// Falls back to [ManagerPersonality.steadfast] for any unrecognised value
+/// so a typo in the data file doesn't crash the app.
+ManagerPersonality _personalityFromString(String value) {
+  switch (value) {
+    case 'lazy':              return ManagerPersonality.lazy;
+    case 'confrontational':  return ManagerPersonality.confrontational;
+    case 'yesMan':           return ManagerPersonality.yesMan;
+    case 'cutthroat':        return ManagerPersonality.cutthroat;
+    case 'passionate':       return ManagerPersonality.passionate;
+    case 'steadfast':        return ManagerPersonality.steadfast;
+    case 'trendjacker':      return ManagerPersonality.trendjacker;
+    case 'nurturing':        return ManagerPersonality.nurturing;
+    default:                 return ManagerPersonality.steadfast;
+  }
+}
+
+/// Maps a JSON string to a [ManagerTrait], or `null` if unrecognised.
+/// Callers filter out nulls so bad data is silently skipped.
+ManagerTrait? _traitFromString(String value) {
+  switch (value) {
+    case 'battleHardened':        return ManagerTrait.battleHardened;
+    case 'dealmaker':             return ManagerTrait.dealmaker;
+    case 'talentWhisperer':       return ManagerTrait.talentWhisperer;
+    case 'bandLoyal':             return ManagerTrait.bandLoyal;
+    case 'selfStarter':           return ManagerTrait.selfStarter;
+    case 'unreliable':            return ManagerTrait.unreliable;
+    case 'inflatedExpectations':  return ManagerTrait.inflatedExpectations;
+    case 'fragileEgo':            return ManagerTrait.fragileEgo;
+    case 'abrasive':              return ManagerTrait.abrasive;
+    case 'toxicReputation':       return ManagerTrait.toxicReputation;
+    default:                      return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -202,6 +256,7 @@ class BandManager {
     required double morale,
     required this.skills,
     required this.personality,
+    required this.bio,
     List<ManagerTrait> traits = const [],
     List<Band> assignedBands = const [],
   })  : morale = morale.clamp(0.0, 100.0),
@@ -245,15 +300,17 @@ class BandManager {
     ManagerPersonality? personality,
     List<ManagerTrait>? traits,
     List<Band>? assignedBands,
+    String? bio,
   }) {
     return BandManager(
-      name: name ?? this.name,
-      salary: salary ?? this.salary,
-      morale: morale ?? this.morale,
-      skills: skills ?? this.skills,
-      personality: personality ?? this.personality,
-      traits: traits ?? this.traits,
+      name:          name          ?? this.name,
+      salary:        salary        ?? this.salary,
+      morale:        morale        ?? this.morale,
+      skills:        skills        ?? this.skills,
+      personality:   personality   ?? this.personality,
+      traits:        traits        ?? this.traits,
       assignedBands: assignedBands ?? _assignedBands,
+      bio:           bio           ?? this.bio,
     );
   }
 
@@ -263,6 +320,32 @@ class BandManager {
   bool get isUnderPerforming => skills.overallRating < 40.0;
   bool get isBurningOut => morale < 25.0;
   int get rosterSize => _assignedBands.length;
+
+  // ── Bio ────────────────────────────────────────────────────────────────────
+
+  /// Flavour text shown on the agent detail screen.
+  final String bio;
+
+  // ── fromJson ───────────────────────────────────────────────────────────────
+
+  factory BandManager.fromJson(Map<String, dynamic> json) {
+    final rawTraits = (json['traits'] as List<dynamic>? ?? [])
+        .cast<String>()
+        .map(_traitFromString)
+        .whereType<ManagerTrait>() // silently drops any null (unrecognised) values
+        .toList();
+
+    return BandManager(
+      name:          json['name']        as String,
+      salary:        (json['salary']     as num).toDouble(),
+      morale:        (json['morale']     as num).toDouble(),
+      personality:   _personalityFromString(json['personality'] as String),
+      traits:        rawTraits,
+      assignedBands: const [],          // populated at runtime, not from JSON
+      skills:        AgentSkills.fromJson(json['skills'] as Map<String, dynamic>),
+      bio:           json['bio']         as String? ?? '',
+    );
+  }
 
   // ── Debug ──────────────────────────────────────────────────────────────────
 
@@ -277,4 +360,20 @@ class BandManager {
           'bands: ${_assignedBands.map((b) => b.name).toList()}, '
           'skills: $skills'
           ')';
+}
+
+// ---------------------------------------------------------------------------
+// Asset loader
+// ---------------------------------------------------------------------------
+
+/// Reads `assets/data/band_managers.json` and returns a typed list.
+/// Call once at startup (e.g. in your AgentGallery initState) and cache
+/// the result — don't call on every build.
+Future<List<BandManager>> loadBandManagers() async {
+  final raw  = await rootBundle.loadString('assets/data/band_managers.json');
+  final list = json.decode(raw) as List<dynamic>;
+  return list
+      .cast<Map<String, dynamic>>()
+      .map(BandManager.fromJson)
+      .toList();
 }
