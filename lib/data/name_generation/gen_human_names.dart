@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'asset_loader.dart';
+import '../asset_loader.dart';
 
 // ─── SURNAME GENERATION CONSTANTS ────────────────────────────────────────────
 // Adjust these to tune the mix of surname types in production.

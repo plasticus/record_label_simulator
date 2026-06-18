@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'asset_loader.dart';
-import 'gen_human_names.dart';
+import '../data/asset_loader.dart';
+import '../data/name_generation/gen_human_names.dart';
 
 class SurnameTestScreen extends StatefulWidget {
   const SurnameTestScreen({super.key});

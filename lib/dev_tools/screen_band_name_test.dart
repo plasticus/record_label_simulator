@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'band_gen_complex.dart';
-import 'patterns.dart';
+import '../generators/band_generator.dart';
+import '../data/patterns.dart';
 
 class BandNameTestScreen extends StatefulWidget {
-  final ComplexBandGenerator generator;
+  final BandGenerator generator;
   const BandNameTestScreen({super.key, required this.generator});
 
   @override

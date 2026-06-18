@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import 'band_gen_complex.dart';
+import '../generators/band_generator.dart';
 
-class ComplexGeneratorScreen extends StatefulWidget {
-  final ComplexBandGenerator generator;
-  const ComplexGeneratorScreen({super.key, required this.generator});
+class BandGenDevScreen extends StatefulWidget {
+  final BandGenerator generator;
+  const BandGenDevScreen({super.key, required this.generator});
 
   @override
-  State<ComplexGeneratorScreen> createState() => _ComplexGeneratorScreenState();
+  State<BandGenDevScreen> createState() => _BandGenDevScreenState();
 }
 
-class _ComplexGeneratorScreenState extends State<ComplexGeneratorScreen> {
-  late final ComplexBandGenerator _generator = widget.generator;
+class _BandGenDevScreenState extends State<BandGenDevScreen> {
+  late final BandGenerator _generator = widget.generator;
 
   // null = Random for both controls
   String? _selectedGenre;
   int? _selectedTier;
 
-  ComplexBand? _band;
+  Band? _band;
 
   static const List<int> _tiers = [10, 20, 30, 40, 50, 60, 70, 80, 90];
 
@@ -79,7 +79,7 @@ class _ComplexGeneratorScreenState extends State<ComplexGeneratorScreen> {
                   hint: 'Random',
                   items: [
                     const DropdownMenuItem(value: null, child: Text('Random')),
-                    ...ComplexBandGenerator.genres.map((g) =>
+                    ...BandGenerator.genres.map((g) =>
                         DropdownMenuItem(value: g, child: Text(g))),
                   ],
                   onChanged: (v) => setState(() => _selectedGenre = v),
@@ -135,14 +135,14 @@ class _ComplexGeneratorScreenState extends State<ComplexGeneratorScreen> {
 
   // ─── BAND SHEET ────────────────────────────────────────────────────────────
 
-  Widget _buildBandSheet(ComplexBand band) {
+  Widget _buildBandSheet(Band band) {
     return ListView(
       padding: const EdgeInsets.only(bottom: 16),
       children: [
         // Band header
         _buildBandHeader(band),
         // Band skills
-        _buildSection('Band Skills', _buildSkillsBlock(band.skills)),
+        _buildSection('Band Stats', _buildSkillsBlock(band.stats)),
         // Band traits
         _buildSection('Band Traits', _buildTraitsBlock(band.traits)),
         // Members
@@ -151,7 +151,7 @@ class _ComplexGeneratorScreenState extends State<ComplexGeneratorScreen> {
     );
   }
 
-  Widget _buildBandHeader(ComplexBand band) {
+  Widget _buildBandHeader(Band band) {
     return Container(
       padding: const EdgeInsets.all(16),
       color: const Color(0xFF1A1A1A),
@@ -179,7 +179,7 @@ class _ComplexGeneratorScreenState extends State<ComplexGeneratorScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Overall  ${band.skills.overall.toStringAsFixed(2)}',
+            'Overall  ${band.stats.overall.toStringAsFixed(2)}',
             style: const TextStyle(
               fontSize: 16,
               color: Colors.white,
@@ -191,15 +191,14 @@ class _ComplexGeneratorScreenState extends State<ComplexGeneratorScreen> {
     );
   }
 
-  Widget _buildSkillsBlock(BandSkills s) {
+  Widget _buildSkillsBlock(BandStats s) {
     return Column(
       children: [
-        _statRow('Technical Prowess', s.technicalProwess),
-        _statRow('Songwriting',        s.songwriting),
-        _statRow('Stage Presence',     s.stagePresence),
-        _statRow('Dedication',         s.dedication),
-        _statRow('Signature Sound',    s.signatureSound),
-        _statRow('Chemistry',          s.chemistry),
+        _statRow('Technical Skill', s.technicalSkill),
+        _statRow('Sonic Identity',  s.sonicIdentity),
+        _statRow('Star Power',      s.starPower),
+        _statRow('Temperament',     s.temperament),
+        _statRow('Chemistry',       s.chemistry),
       ],
     );
   }
@@ -215,7 +214,7 @@ class _ComplexGeneratorScreenState extends State<ComplexGeneratorScreen> {
     );
   }
 
-  Widget _buildMembersList(List<ComplexBandMember> members) {
+  Widget _buildMembersList(List<BandMember> members) {
     return Column(
       children: members.asMap().entries.map((e) {
         return _buildMemberCard(e.key + 1, e.value);
@@ -223,7 +222,7 @@ class _ComplexGeneratorScreenState extends State<ComplexGeneratorScreen> {
     );
   }
 
-  Widget _buildMemberCard(int index, ComplexBandMember m) {
+  Widget _buildMemberCard(int index, BandMember m) {
     return Card(
       color: const Color(0xFF1E1E1E),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
@@ -263,17 +262,17 @@ class _ComplexGeneratorScreenState extends State<ComplexGeneratorScreen> {
             Row(
               children: [
                 _miniStat('Skill',      m.skill),
-                _miniStat('Creativity', m.creativity),
-                _miniStat('Charisma',   m.charisma),
-                _miniStat('Resilience', m.resilience),
+                _miniStat('Creativity', m.songwriting),
+                _miniStat('Charisma',   m.starPower),
+                _miniStat('Resilience', m.temperament),
               ],
             ),
             const SizedBox(height: 6),
             // Growth stats
             Row(
               children: [
-                _miniStat('Growth Rate', m.growthRate, color: Colors.lightBlueAccent),
-                _miniStat('Motivation',  m.motivation, color: Colors.lightBlueAccent),
+                _miniStat('Growth Rate', m.cooperation, color: Colors.lightBlueAccent),
+                _miniStat('Motivation',  m.cooperation, color: Colors.lightBlueAccent),
               ],
             ),
           ],

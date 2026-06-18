@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/services.dart';
-import 'gen_human_names.dart';
+import 'name_generation/gen_human_names.dart';
 
 // ─── APP DATA ────────────────────────────────────────────────────────────────
 

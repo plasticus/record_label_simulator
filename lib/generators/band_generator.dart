@@ -1,7 +1,7 @@
 import 'dart:math';
-import 'patterns.dart';
-import 'asset_loader.dart';
-import 'gen_human_names.dart';
+import '../data/patterns.dart';
+import '../data/asset_loader.dart';
+import '../data/name_generation/gen_human_names.dart';
 
 // ─── ENUMS ───────────────────────────────────────────────────────────────────
 
@@ -24,19 +24,18 @@ extension GimmickTypeLabel on GimmickType {
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
-const int kGimmickChance   = 5;
+const int kGimmickChance = 5;
 
-/// Prepositions that make logical sense in creature/situation band name patterns.
-/// e.g. "Yeti On A Budget", "Kraken Against A Tribunal"
 const List<String> creaturePrepositions = [
   'On', 'With', 'Without', 'Against', 'Beyond',
   'Before', 'After', 'Under', 'Over', 'Through',
   'During', 'Across', 'Within', 'Amid',
 ];
-const int kFanClubMin      = 50;
-const int kFanClubMax      = 500;
-const int kMemberAgeMin    = 18;
-const int kMemberAgeMax    = 35;
+
+const int kFanClubMin   = 50;
+const int kFanClubMax   = 500;
+const int kMemberAgeMin = 18;
+const int kMemberAgeMax = 35;
 
 // ─── GENRE DATA ──────────────────────────────────────────────────────────────
 
@@ -65,8 +64,10 @@ class GenreData {
 }
 
 // ─── BAND MEMBER ─────────────────────────────────────────────────────────────
+// A band member has 5 core skills. Band-level stats are derived by averaging
+// these across all members (see BandStats). No growth stats — kept simple.
 
-class ComplexBandMember {
+class BandMember {
   String name;
   final int age;
   final Gender gender;
@@ -75,17 +76,14 @@ class ComplexBandMember {
   bool isLeadVocals;
   bool isBackingVocals;
 
-  // Core stats — soft ceiling 100, legendary can exceed.
-  final double charisma;
-  final double skill;
-  final double creativity;
-  final double resilience;
+  // ── 5 core member skills (0–100 soft cap, tier-gated at gen time) ──
+  final double skill;         // → averages into Band.technicalSkill
+  final double songwriting;   // → averages into Band.sonicIdentity
+  final double starPower;     // → averages into Band.starPower
+  final double temperament;   // → averages into Band.temperament
+  final double cooperation;   // → averages into Band.chemistry
 
-  // Growth stats — true 1-100, not factored into band averages.
-  final double growthRate;
-  final double motivation;
-
-  ComplexBandMember({
+  BandMember({
     required this.name,
     required this.age,
     required this.gender,
@@ -93,53 +91,67 @@ class ComplexBandMember {
     this.doubleInstrument,
     this.isLeadVocals = false,
     this.isBackingVocals = false,
-    required this.charisma,
     required this.skill,
-    required this.creativity,
-    required this.resilience,
-    required this.growthRate,
-    required this.motivation,
+    required this.songwriting,
+    required this.starPower,
+    required this.temperament,
+    required this.cooperation,
   });
 
   String get displayInstrument {
-    List<String> roles = [instrument];
-    if (instrument == 'Vocals' && doubleInstrument != null) {
-      roles.add(doubleInstrument!);
-    }
-    if (isLeadVocals && instrument != 'Vocals') {
-      roles.add('Vocals');
-    }
-    if (isBackingVocals) {
-      roles.add('Backing Vocals');
-    }
+    final roles = <String>[instrument];
+    if (instrument == 'Vocals' && doubleInstrument != null) roles.add(doubleInstrument!);
+    if (isLeadVocals && instrument != 'Vocals') roles.add('Vocals');
+    if (isBackingVocals) roles.add('Backing Vocals');
     return roles.join(' / ');
   }
 
   String get genderLabel => gender == Gender.male ? 'M' : 'F';
 }
 
-// ─── BAND SKILLS ─────────────────────────────────────────────────────────────
+// ─── BAND STATS ──────────────────────────────────────────────────────────────
+// These are the band's aggregate stats, derived by averaging member skills.
+// They are the inputs to the Album Quality formula in the Vision Doc.
 
-class BandSkills {
-  final double technicalProwess;
-  final double songwriting;
-  final double stagePresence;
-  final double dedication;
-  final double signatureSound;
-  final double chemistry;
+class BandStats {
+  final double technicalSkill;  // avg of members' skill
+  final double sonicIdentity;   // avg of members' songwriting
+  final double starPower;       // avg of members' starPower
+  final double temperament;     // avg of members' temperament
+  final double chemistry;       // avg of members' cooperation
 
   double get overall =>
-      (technicalProwess + songwriting + stagePresence + dedication +
-          signatureSound + chemistry) / 6.0;
+      (technicalSkill + sonicIdentity + starPower + temperament + chemistry) / 5.0;
 
-  const BandSkills({
-    required this.technicalProwess,
-    required this.songwriting,
-    required this.stagePresence,
-    required this.dedication,
-    required this.signatureSound,
+  const BandStats({
+    required this.technicalSkill,
+    required this.sonicIdentity,
+    required this.starPower,
+    required this.temperament,
     required this.chemistry,
   });
+
+  /// Derives band stats by averaging the matching skill across all members.
+  factory BandStats.fromMembers(List<BandMember> members) {
+    if (members.isEmpty) {
+      return const BandStats(
+        technicalSkill: 0, sonicIdentity: 0,
+        starPower: 0, temperament: 0, chemistry: 0,
+      );
+    }
+    double avg(double Function(BandMember) f) =>
+        double.parse(
+          (members.fold(0.0, (sum, m) => sum + f(m)) / members.length)
+              .toStringAsFixed(2),
+        );
+    return BandStats(
+      technicalSkill: avg((m) => m.skill),
+      sonicIdentity:  avg((m) => m.songwriting),
+      starPower:      avg((m) => m.starPower),
+      temperament:    avg((m) => m.temperament),
+      chemistry:      avg((m) => m.cooperation),
+    );
+  }
 }
 
 // ─── BAND TRAITS ─────────────────────────────────────────────────────────────
@@ -158,31 +170,30 @@ class BandTraits {
   });
 }
 
-// ─── COMPLEX BAND ────────────────────────────────────────────────────────────
+// ─── BAND ────────────────────────────────────────────────────────────────────
 
-class ComplexBand {
+class Band {
   final String name;
-  final List<ComplexBandMember> members;
-  final BandSkills skills;
+  final List<BandMember> members;
+  final BandStats stats;
   final BandTraits traits;
 
-  const ComplexBand({
+  const Band({
     required this.name,
     required this.members,
-    required this.skills,
+    required this.stats,
     required this.traits,
   });
 }
 
-// ─── GENERATOR ───────────────────────────────────────────────────────────────
+// ─── BAND GENERATOR ──────────────────────────────────────────────────────────
 
-class ComplexBandGenerator {
+class BandGenerator {
   final Random _random = Random();
   AppData? _appData;
   NameGenerator? _nameGenerator;
 
-  /// Must be called once before generating bands.
-  /// e.g. await ComplexBandGenerator.instance.init();
+  /// Call once at app startup before generating bands.
   Future<void> init() async {
     _appData = await AssetLoader.load();
     final surnameGen = SurnameGenerator(_appData!);
@@ -208,7 +219,7 @@ class ComplexBandGenerator {
     ),
     'Rock': GenreData(
       name: 'Rock',
-      description: 'Classic amplified energy fueled by driving drum beats, heavy bass lines, and raw, electric guitar riffs.',
+      description: 'Classic amplified energy fueled by driving drum beats, heavy bass lines, and raw electric guitar riffs.',
       minMembers: 3, maxMembers: 5,
       minInstruments: ['Vocals', 'Drums', 'Guitar', 'Bass'],
       otherInstruments: ['Guitar', 'Brass', 'Keyboard'],
@@ -239,161 +250,148 @@ class ComplexBandGenerator {
     'Jazz': GenreData(
       name: 'Jazz',
       description: 'Complex, improvisational musicianship driven by swing rhythms, virtuosic solos, and intricate chord progressions.',
-      minMembers: 3, maxMembers: 6,
-      minInstruments: ['Drums', 'Bass', 'Brass'],
-      otherInstruments: ['Vocals', 'Piano', 'Keyboard', 'Guitar'],
-      backingVocalChance: 10,
-      vocalistType: 'likely_standalone',
-      vocalDoubleWeights: {'Guitar': 70, 'Piano': 30},
+      minMembers: 3, maxMembers: 7,
+      minInstruments: ['Drums', 'Bass'],
+      otherInstruments: ['Trumpet', 'Saxophone', 'Piano', 'Guitar', 'Brass', 'Vocals', 'Percussion'],
+      backingVocalChance: 5,
+      vocalistType: 'optional',
+      vocalDoubleWeights: {},
     ),
     'Glitch-Hop': GenreData(
       name: 'Glitch-Hop',
-      description: 'Funk-infused electronic hip-hop beats chopped up with digital stutter effects, heavy synthetic bass, and mechanical chirps.',
-      minMembers: 1, maxMembers: 5,
-      minInstruments: ['Vocals', 'DJ'],
-      otherInstruments: ['Vocals', 'Synth', 'Drums', 'Bass'],
-      backingVocalChance: 50,
+      description: 'A chaotic fusion of glitchy electronic textures, hip-hop beats, and fragmented digital audio manipulation.',
+      minMembers: 1, maxMembers: 4,
+      minInstruments: ['Vocals'],
+      otherInstruments: ['Synth', 'DJ', 'Drums', 'Vocals'],
+      backingVocalChance: 10,
       vocalistType: 'likely_standalone',
-      vocalDoubleWeights: {'Synth': 60, 'Bass': 40},
+      vocalDoubleWeights: {'DJ': 60, 'Synth': 40},
     ),
     'Rust Beat': GenreData(
       name: 'Rust Beat',
-      description: 'Industrial, dance-focused garage rock echoing with metallic clangs, driving drum machines, and fuzzy, distorted bass lines.',
-      minMembers: 2, maxMembers: 4,
-      minInstruments: ['Vocals', 'Drums', 'Bass'],
-      otherInstruments: ['Guitar', 'Synth', 'Keyboard', 'Percussion'],
+      description: 'Industrial percussion and analogue warmth collide — think factory floors and tape hiss layered over booming 808s.',
+      minMembers: 1, maxMembers: 3,
+      minInstruments: ['Drums'],
+      otherInstruments: ['Synth', 'Bass', 'Vocals', 'DJ'],
       backingVocalChance: 10,
-      vocalistType: 'likely_standalone',
-      vocalDoubleWeights: {'Guitar': 55, 'Bass': 30, 'Drums': 15},
+      vocalistType: 'optional',
+      vocalDoubleWeights: {},
     ),
     'Klangor': GenreData(
       name: 'Klangor',
-      description: 'Aggressive German-born heavy metal welded seamlessly to powerful, booming brass orchestration and thunderous rhythms.',
-      minMembers: 4, maxMembers: 8,
-      minInstruments: ['Vocals', 'Guitar', 'Drums', 'Brass'],
-      otherInstruments: ['Guitar', 'Bass', 'Brass', 'Percussion'],
-      backingVocalChance: 25,
-      vocalistType: 'likely_standalone',
-      vocalDoubleWeights: {'Guitar': 70, 'Bass': 30},
+      description: 'Abrasive, maximalist brass-driven noise-rock. If it doesn\'t hurt a little, it\'s not Klangor.',
+      minMembers: 3, maxMembers: 6,
+      minInstruments: ['Drums', 'Bass', 'Brass'],
+      otherInstruments: ['Brass', 'Guitar', 'Vocals', 'Percussion'],
+      backingVocalChance: 5,
+      vocalistType: 'optional',
+      vocalDoubleWeights: {},
     ),
     'Vandalo': GenreData(
       name: 'Vandalo',
-      description: 'High-octane, rebellious Latin rock infused with explosive tropical percussion and fiercely passionate, high-energy vocals.',
-      minMembers: 3, maxMembers: 5,
-      minInstruments: ['Vocals', 'Guitar', 'Drums', 'Percussion'],
-      otherInstruments: ['Percussion', 'Vocals', 'Brass'],
-      backingVocalChance: 25,
+      description: 'Street-art energy translated into sound — aggressive, rhythmic, and spray-painted in neon.',
+      minMembers: 2, maxMembers: 5,
+      minInstruments: ['Vocals', 'Drums'],
+      otherInstruments: ['Guitar', 'Bass', 'Synth', 'DJ'],
+      backingVocalChance: 15,
       vocalistType: 'likely_standalone',
-      vocalDoubleWeights: {'Guitar': 55, 'Percussion': 45},
+      vocalDoubleWeights: {'Guitar': 50, 'DJ': 50},
     ),
     'Gakkion': GenreData(
       name: 'Gakkion',
-      description: 'Japanese-pioneered math rock featuring hyper-complex time signatures played on predominantly customized, handmade instruments.',
-      minMembers: 3, maxMembers: 5,
-      minInstruments: ['Vocals', 'Guitar', 'Bass', 'Drums'],
-      otherInstruments: ['Percussion', 'Keyboard'],
-      backingVocalChance: 10,
-      vocalistType: 'likely_standalone',
-      vocalDoubleWeights: {'Guitar': 65, 'Bass': 35},
+      description: 'A Japanese-influenced fusion of traditional instrumentation with hyperpop production. Chaotic, precise, and extremely online.',
+      minMembers: 2, maxMembers: 5,
+      minInstruments: ['Vocals'],
+      otherInstruments: ['Synth', 'Keyboard', 'Percussion', 'Vocals'],
+      backingVocalChance: 30,
+      vocalistType: 'standalone',
+      vocalDoubleWeights: {'Keyboard': 60, 'Synth': 40},
     ),
     'Bruitogaze': GenreData(
       name: 'Bruitogaze',
-      description: 'French-inspired hypnotic soundscapes drowning in staggering walls of pure distortion, echoes, and heavily affected vocals.',
-      minMembers: 2, maxMembers: 4,
-      minInstruments: ['Vocals', 'Synth'],
-      otherInstruments: ['Vocals', 'Drums', 'Guitar', 'Keyboard'],
-      backingVocalChance: 10,
+      description: 'Walls of guitar noise and dreamy, indecipherable vocals — shoegaze pushed past its breaking point.',
+      minMembers: 3, maxMembers: 5,
+      minInstruments: ['Vocals', 'Guitar', 'Drums'],
+      otherInstruments: ['Guitar', 'Bass', 'Keyboard'],
+      backingVocalChance: 20,
       vocalistType: 'likely_standalone',
-      vocalDoubleWeights: {'Guitar': 50, 'Synth': 50},
+      vocalDoubleWeights: {'Guitar': 70, 'Bass': 30},
     ),
     'Indie': GenreData(
       name: 'Indie',
-      description: 'Quirky, independent bedroom productions favoring artistic freedom, acoustic textures, and slightly eccentric lyrical themes.',
-      minMembers: 1, maxMembers: 4,
+      description: 'Lo-fi heart, hi-fi ambition. Introspective lyrics, jangly guitars, and a studied disregard for mainstream polish.',
+      minMembers: 2, maxMembers: 5,
       minInstruments: ['Vocals', 'Guitar'],
-      otherInstruments: ['Vocals', 'Drums', 'Bass', 'Keyboard', 'Piano', 'Brass'],
-      backingVocalChance: 25,
+      otherInstruments: ['Bass', 'Drums', 'Keyboard', 'Guitar'],
+      backingVocalChance: 20,
       vocalistType: 'likely_standalone',
-      vocalDoubleWeights: {'Guitar': 65, 'Piano': 20, 'Bass': 15},
+      vocalDoubleWeights: {'Guitar': 60, 'Bass': 25, 'Keyboard': 15},
     ),
     'Hipster': GenreData(
       name: 'Hipster',
-      description: "Folksy, fast paced strum heavy poems, filled with hey's and ho's. Feels like thrift shop background music.",
-      minMembers: 5, maxMembers: 10,
-      minInstruments: ['Vocals', 'Backing Vocals', 'Guitar'],
-      otherInstruments: ['Keyboard', 'Guitar', 'Bass', 'Drums', 'Percussion', 'Brass'],
-      backingVocalChance: 25,
+      description: 'You probably haven\'t heard of them. Obscure references, vintage gear, and an experimental bent that alienates as many fans as it earns.',
+      minMembers: 2, maxMembers: 6,
+      minInstruments: ['Vocals'],
+      otherInstruments: ['Keyboard', 'Bass', 'Drums', 'Guitar', 'Synth', 'Vocals', 'Percussion'],
+      backingVocalChance: 35,
       vocalistType: 'standalone',
-      vocalDoubleWeights: {},
+      vocalDoubleWeights: {'Keyboard': 50, 'Guitar': 30, 'Synth': 20},
     ),
     'Doom': GenreData(
       name: 'Doom',
-      description: 'Musical equivalent of a very tired, very loud dinosaur trying to get out of a beanbag chair while being haunted by a fuzz guitar.',
+      description: 'Slow, crushing riffs and funeral tempos. Every note feels like a geological event.',
       minMembers: 3, maxMembers: 5,
       minInstruments: ['Vocals', 'Guitar', 'Bass', 'Drums'],
-      otherInstruments: ['Keyboard', 'Synth', 'Percussion'],
-      backingVocalChance: 10,
+      otherInstruments: ['Guitar', 'Keyboard'],
+      backingVocalChance: 5,
       vocalistType: 'likely_standalone',
-      vocalDoubleWeights: {'Guitar': 55, 'Bass': 30, 'Drums': 15},
+      vocalDoubleWeights: {'Guitar': 60, 'Bass': 40},
     ),
     'Punk': GenreData(
       name: 'Punk',
-      description: 'Fighting the power for 50 years with raucous guitars and blazing bass lines.',
-      minMembers: 3, maxMembers: 5,
-      minInstruments: ['Vocals', 'Drums', 'Bass', 'Guitar'],
-      otherInstruments: ['Vocals', 'Guitar'],
+      description: 'Fast, loud, three chords, and a grievance. No solos. No nonsense. No apologies.',
+      minMembers: 3, maxMembers: 4,
+      minInstruments: ['Vocals', 'Guitar', 'Bass', 'Drums'],
+      otherInstruments: ['Guitar'],
       backingVocalChance: 25,
       vocalistType: 'likely_standalone',
       vocalDoubleWeights: {'Guitar': 70, 'Bass': 30},
     ),
     'AuraCore': GenreData(
       name: 'AuraCore',
-      description: 'Mystical synthy backdrop to your deep mind. See yourself floating on a river of notes and colors. Made in bedrooms for bedrooms.',
-      minMembers: 1, maxMembers: 1,
-      minInstruments: ['Synth'],
-      otherInstruments: ['Vocals'],
-      backingVocalChance: 0,
-      vocalistType: 'none',
-      vocalDoubleWeights: {},
+      description: 'Ambient textures, spiritual subject matter, and production that sounds like it was recorded inside a cloud. Extremely niche. Extremely sincere.',
+      minMembers: 1, maxMembers: 4,
+      minInstruments: ['Vocals'],
+      otherInstruments: ['Synth', 'Keyboard', 'Percussion', 'Vocals'],
+      backingVocalChance: 40,
+      vocalistType: 'standalone',
+      vocalDoubleWeights: {'Synth': 60, 'Keyboard': 40},
     ),
   };
 
-  // ─── GENERATE ──────────────────────────────────────────────────────────────
+  // ─── PUBLIC API ──────────────────────────────────────────────────────────
 
-  ComplexBand generate({String? forcedGenre, int? qualityTier}) {
+  Band generate({String? forcedGenre, int? qualityTier}) {
     final genreName = forcedGenre ?? genres[_random.nextInt(genres.length)];
     final genre = genreData[genreName]!;
-    final tier = qualityTier ?? 20;
+    final tier = qualityTier ?? (10 + _random.nextInt(9) * 10);
 
-    final members = _buildLineup(genre, genreName, tier);
-    final skills = _buildSkills(members, tier);
-    final traits = _buildTraits(genreName);
-    // Solo artist rule: 75% chance to use the member's real name instead of a band name.
-    // AuraCore always uses a generated band name regardless of size.
-    final bool isSoloArtist = members.length == 1 && genreName != 'AuraCore';
-    final name = (isSoloArtist && _random.nextInt(100) < 75)
-        ? members.first.name
-        : _generateBandName();
+    final members = _buildMembers(genre, genreName, tier);
+    final stats   = BandStats.fromMembers(members);
+    final traits  = _buildTraits(genreName);
+    final name    = _generateBandName();
 
-    return ComplexBand(
-      name: name,
-      members: members,
-      skills: skills,
-      traits: traits,
-    );
+    return Band(name: name, members: members, stats: stats, traits: traits);
   }
 
-  // ─── LINEUP (ported from band_generator.dart) ────────────────────────────
+  // ─── MEMBER GENERATION ───────────────────────────────────────────────────
 
-  List<ComplexBandMember> _buildLineup(GenreData genre, String genreName, int tier) {
-    final bandSize = genre.minMembers + _random.nextInt(genre.maxMembers - genre.minMembers + 1);
+  List<BandMember> _buildMembers(GenreData genre, String genreName, int tier) {
+    final bandSize = genre.minMembers +
+        _random.nextInt(genre.maxMembers - genre.minMembers + 1);
 
-    List<ComplexBandMember> members = List.generate(
-      bandSize,
-          (i) => _blankMember(tier),
-    );
+    List<BandMember> members = List.generate(bandSize, (_) => _blankMember(tier));
 
-    // --- STEP 1: PREP REQUIRED POOL ---
     List<String> requiredPool = List.from(genre.minInstruments);
     requiredPool.remove('Backing Vocals');
 
@@ -406,15 +404,14 @@ class ComplexBandGenerator {
     bool vocalsRequired = requiredPool.remove('Vocals');
     requiredPool.shuffle(_random);
 
-    // --- STEP 2: RESERVE VOCALIST SLOT ---
     int memberIdx = 0;
+
     if (vocalsRequired && genre.vocalistType != 'none') {
       members[memberIdx].instrument = 'Vocals';
       members[memberIdx].isLeadVocals = true;
       memberIdx++;
     }
 
-    // --- STEP 3: ASSIGN REQUIRED INSTRUMENTS ---
     List<String> droppedInstruments = [];
     for (String instrument in requiredPool) {
       if (memberIdx < members.length) {
@@ -425,14 +422,12 @@ class ComplexBandGenerator {
       }
     }
 
-    // --- STEP 4: WILDCARD ROLLS ---
     while (memberIdx < members.length) {
       members[memberIdx].instrument =
           _selectWildcard(genre.otherInstruments, genreName, members);
       memberIdx++;
     }
 
-    // --- STEP 5: VOCAL DOUBLING ---
     if (vocalsRequired && genre.vocalistType == 'likely_standalone') {
       if (droppedInstruments.isNotEmpty) {
         _addDoubleInstrument(genre, members, forced: droppedInstruments);
@@ -441,20 +436,18 @@ class ComplexBandGenerator {
       }
     }
 
-    // --- STEP 6: BACKING VOCALS ---
     const standaloneBackingGenres = {'Pop', 'Soul', 'Hipster'};
     for (var member in members) {
       if (member.isLeadVocals || member.instrument == 'Vocals') continue;
       if (member.instrument == 'Brass') continue;
-      bool allowed = standaloneBackingGenres.contains(genreName)
-          || member.instrument != 'None';
+      bool allowed = standaloneBackingGenres.contains(genreName) ||
+          member.instrument != 'None';
       if (allowed && _random.nextInt(100) < genre.backingVocalChance) {
         member.isBackingVocals = true;
       }
     }
 
-    // --- STEP 7: SORT VOCALISTS TO TOP ---
-    int vocalTier(ComplexBandMember m) {
+    int vocalTier(BandMember m) {
       if (m.instrument == 'Vocals' && m.doubleInstrument == null) return 0;
       if (m.instrument == 'Vocals') return 1;
       return 2;
@@ -464,31 +457,29 @@ class ComplexBandGenerator {
     return members;
   }
 
-  ComplexBandMember _blankMember(int tier) {
+  BandMember _blankMember(int tier) {
     final gender = _random.nextBool() ? Gender.male : Gender.female;
     final age = kMemberAgeMin + _random.nextInt(kMemberAgeMax - kMemberAgeMin + 1);
-    return ComplexBandMember(
-      name: _generateMemberName(gender),
-      age: age,
-      gender: gender,
-      instrument: 'None',
-      charisma:   _rollCoreStat(tier),
-      skill:      _rollCoreStat(tier),
-      creativity: _rollCoreStat(tier),
-      resilience: _rollCoreStat(tier),
-      growthRate: _rollGrowthStat(),
-      motivation: _rollGrowthStat(),
+    return BandMember(
+      name:         _generateMemberName(gender),
+      age:          age,
+      gender:       gender,
+      instrument:   'None',
+      skill:        _rollStat(tier),
+      songwriting:  _rollStat(tier),
+      starPower:    _rollStat(tier),
+      temperament:  _rollStat(tier),
+      cooperation:  _rollStat(tier),
     );
   }
 
   String _generateMemberName(Gender gender) {
     if (_nameGenerator == null) return gender == Gender.male ? 'Male Member' : 'Female Member';
     final result = _nameGenerator!.generate(isMale: gender == Gender.male);
-    // TODO: if result.isStupid, apply +25% Motivation boost to this member
     return result.name;
   }
 
-  void _addDoubleInstrument(GenreData genre, List<ComplexBandMember> members,
+  void _addDoubleInstrument(GenreData genre, List<BandMember> members,
       {List<String> forced = const []}) {
     final vocalist = members.where((m) => m.isLeadVocals).firstOrNull;
     if (vocalist == null) return;
@@ -504,7 +495,7 @@ class ComplexBandGenerator {
     } else {
       if (genre.vocalDoubleWeights.isEmpty) return;
       int total = genre.vocalDoubleWeights.values.fold(0, (a, b) => a + b);
-      int roll = _random.nextInt(total);
+      int roll  = _random.nextInt(total);
       int cumulative = 0;
       chosen = genre.vocalDoubleWeights.keys.first;
       for (var entry in genre.vocalDoubleWeights.entries) {
@@ -516,7 +507,7 @@ class ComplexBandGenerator {
   }
 
   String _selectWildcard(List<String> choices, String genreName,
-      List<ComplexBandMember> lineup) {
+      List<BandMember> lineup) {
     const unique = {'Drums', 'Bass', 'Piano', 'Keyboard', 'DJ', 'Synth'};
     final shuffled = List.from(choices)..shuffle(_random);
     for (String option in shuffled) {
@@ -529,23 +520,7 @@ class ComplexBandGenerator {
     return choices[_random.nextInt(choices.length)];
   }
 
-  // ─── BAND SKILLS ─────────────────────────────────────────────────────────
-
-  BandSkills _buildSkills(List<ComplexBandMember> members, int tier) {
-    double avg(double Function(ComplexBandMember) f) =>
-        _round(members.fold(0.0, (s, m) => s + f(m)) / members.length);
-
-    return BandSkills(
-      technicalProwess: avg((m) => m.skill),
-      songwriting:      avg((m) => m.creativity),
-      stagePresence:    avg((m) => m.charisma),
-      dedication:       avg((m) => m.resilience),
-      signatureSound:   _rollCoreStat(tier),
-      chemistry:        _rollCoreStat(tier),
-    );
-  }
-
-  // ─── BAND TRAITS ─────────────────────────────────────────────────────────
+  // ─── TRAITS ──────────────────────────────────────────────────────────────
 
   BandTraits _buildTraits(String genreName) {
     final gimmick = _random.nextInt(100) < kGimmickChance
@@ -553,9 +528,9 @@ class ComplexBandGenerator {
         : null;
     return BandTraits(
       happiness: 100.00,
-      genre: genreName,
-      gimmick: gimmick,
-      fanClub: kFanClubMin + _random.nextInt(kFanClubMax - kFanClubMin + 1),
+      genre:     genreName,
+      gimmick:   gimmick,
+      fanClub:   kFanClubMin + _random.nextInt(kFanClubMax - kFanClubMin + 1),
     );
   }
 
@@ -564,7 +539,7 @@ class ComplexBandGenerator {
   String _generateBandName() =>
       generateBandNameFromPattern(bandPatterns[_random.nextInt(bandPatterns.length)]);
 
-  /// Public so the band name test screen can call it with a specific pattern.
+  /// Public so dev tool screens can call it with a specific pattern.
   String generateBandNameFromPattern(String pattern) {
     if (pattern.startsWith('[Acronym:')) {
       final words = [_pickBank('Noun'), _pickBank('Noun'), _pickBank('Noun')];
@@ -575,20 +550,16 @@ class ComplexBandGenerator {
       return firstSyllables[_random.nextInt(firstSyllables.length)]
           + secondSyllables[_random.nextInt(secondSyllables.length)];
     }
-
-    // Creature pattern gets special handling for preposition and article agreement
     if (pattern.contains('[Creature_Noun]') && pattern.contains('[Situation_Noun]')) {
       return _buildCreatureName();
     }
 
     final name = pattern.replaceAllMapped(RegExp(r'\[([^\]]+)\]'), (m) {
       final token = m.group(1)!;
-      final list = _appData?.wordBank(token) ?? [];
-      return list.isNotEmpty
-          ? list[_random.nextInt(list.length)]
-          : m.group(0)!;
+      final list  = _appData?.wordBank(token) ?? [];
+      return list.isNotEmpty ? list[_random.nextInt(list.length)] : m.group(0)!;
     });
-    // Append acronym for names with 4+ words
+
     final words = name.split(' ');
     if (words.length >= 4) {
       final acronym = words.map((w) => w[0].toUpperCase()).join('');
@@ -597,8 +568,6 @@ class ComplexBandGenerator {
     return name;
   }
 
-  /// Builds a creature/situation name.
-  /// e.g. "Yeti On a Budget", "Manticore With a Grievance"
   String _buildCreatureName() {
     final creature = _pickBank('Creature_Noun');
     final phrase   = _pickBank('Situation_Phrase');
@@ -611,19 +580,13 @@ class ComplexBandGenerator {
     return list[_random.nextInt(list.length)];
   }
 
-  /// Exposes random index for external use (e.g. test screens picking patterns).
   int randomIndex(int max) => _random.nextInt(max);
 
   // ─── STAT HELPERS ────────────────────────────────────────────────────────
 
-  double _rollCoreStat(int tier) {
-    final min = (tier - 5).toDouble();
+  double _rollStat(int tier) {
+    final min   = (tier - 5).toDouble();
     final value = min + (_random.nextDouble() * 10.0) + (_random.nextDouble() * 0.99);
     return double.parse(value.toStringAsFixed(2));
   }
-
-  double _rollGrowthStat() =>
-      double.parse((1.0 + _random.nextDouble() * 99.0).toStringAsFixed(2));
-
-  double _round(double v) => double.parse(v.toStringAsFixed(2));
 }
