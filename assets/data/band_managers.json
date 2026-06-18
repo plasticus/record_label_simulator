@@ -1,0 +1,87 @@
+[
+  {
+    "name": "Talia Vance",
+    "salary": 4200.0,
+    "morale": 78.0,
+    "personality": "steadfast",
+    "traits": ["battleHardened"],
+    "assignedBands": [],
+    "skills": {
+      "acumen": 35.0,
+      "insight": 50.0,
+      "resolve": 92.0,
+      "presence": 81.0,
+      "execution": 40.0,
+      "network": 55.0
+    },
+    "bio": "Talia uses her commanding presence and rock-solid mental stamina to keep the label's most volatile, high-ego rockstars completely in line during grueling interplanetary tours. While her weaker business acumen means she occasionally overlooks optimal touring margins, her high resolve ensures she survives high-stakes dashboard crises without breaking a sweat."
+  },
+  {
+    "name": "Boz Delacroix",
+    "salary": 2800.0,
+    "morale": 61.0,
+    "personality": "lazy",
+    "traits": ["inflatedExpectations"],
+    "assignedBands": [],
+    "skills": {
+      "acumen": 44.0,
+      "insight": 71.0,
+      "resolve": 28.0,
+      "presence": 55.0,
+      "execution": 22.0,
+      "network": 80.0
+    },
+    "bio": "Boz has an almost supernatural nose for talent and a contacts list that reads like a who's-who of the 2120 underground scene. The problem is getting him to actually do anything with it. Left unsupervised, he'll spend most of the month at the Lunar lounge bars networking — which he'll insist counts as work, and frankly, it kind of does."
+  },
+  {
+    "name": "Priya Osei",
+    "salary": 5100.0,
+    "morale": 85.0,
+    "personality": "cutthroat",
+    "traits": ["dealmaker", "abrasive"],
+    "assignedBands": [],
+    "skills": {
+      "acumen": 88.0,
+      "insight": 39.0,
+      "resolve": 74.0,
+      "presence": 66.0,
+      "execution": 82.0,
+      "network": 47.0
+    },
+    "bio": "Priya runs her roster like a logistics operation. Contracts are optimized, schedules are airtight, and touring margins are the best in the building. She has no interest in whether a band is artistically fulfilled — that's their problem. Bands who want a mother figure hate her. Bands who want to get paid love her."
+  },
+  {
+    "name": "Remy Falcão",
+    "salary": 3500.0,
+    "morale": 52.0,
+    "personality": "yesMan",
+    "traits": ["fragileEgo"],
+    "assignedBands": [],
+    "skills": {
+      "acumen": 50.0,
+      "insight": 63.0,
+      "resolve": 38.0,
+      "presence": 44.0,
+      "execution": 57.0,
+      "network": 61.0
+    },
+    "bio": "Remy is pleasant, agreeable, and thoroughly incapable of delivering bad news. He will tell a band their worst album is a masterpiece, tell you their tour is going great while quietly drowning, and never escalate a problem until it's a crisis. On the bright side, his artists adore him, and he rarely causes drama — he just quietly enables it."
+  },
+  {
+    "name": "Dominique Haze",
+    "salary": 4700.0,
+    "morale": 69.0,
+    "personality": "passionate",
+    "traits": ["talentWhisperer", "bandLoyal"],
+    "assignedBands": [],
+    "skills": {
+      "acumen": 31.0,
+      "insight": 85.0,
+      "resolve": 55.0,
+      "presence": 78.0,
+      "execution": 48.0,
+      "network": 69.0
+    },
+    "bio": "Dominique has broken three acts from total obscurity into chart-toppers, and she will remind you of this regularly. She believes deeply in her artists — sometimes more than the numbers warrant — and her infectious enthusiasm pulls bands through creative droughts that would otherwise end careers. When she burns out, though, she burns hard. Keep her morale high or she becomes a liability."
+  }
+]
