@@ -76,6 +76,9 @@ class _AgentGalleryScreenState extends ConsumerState<AgentGalleryScreen> {
           final String sanitizedName = rawName.replaceAll(' ', '').toLowerCase().replaceAll('ã', 'a');
           final String assetPath = 'assets/images/agents/$sanitizedName.png';
 
+          // Gather all traits into a list safely
+          final List<dynamic> traitsList = agent['traits'] ?? [];
+
           return Card(
             margin: const EdgeInsets.only(bottom: 16.0),
             elevation: 4.0,
@@ -140,30 +143,32 @@ class _AgentGalleryScreenState extends ConsumerState<AgentGalleryScreen> {
                               ],
                             ),
                             const SizedBox(height: 6.0),
-                            // Stylized Personality Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                              decoration: BoxDecoration(
-                                color: Colors.deepPurple.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(4.0),
-                                border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.35)),
-                              ),
-                              child: Text(
-                                agent['personality'] ?? 'normal',
-                                style: const TextStyle(
-                                  color: Colors.deepPurpleAccent,
-                                  fontSize: 11.0,
-                                  fontWeight: FontWeight.w500,
-                                  fontStyle: FontStyle.italic,
+                            // Unified Horizontal Badges Flow Area
+                            Wrap(
+                              spacing: 6.0,
+                              runSpacing: 6.0,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                // Purple Personality Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                                  decoration: BoxDecoration(
+                                    color: Colors.deepPurple.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4.0),
+                                    border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.35)),
+                                  ),
+                                  child: Text(
+                                    agent['personality'] ?? 'normal',
+                                    style: const TextStyle(
+                                      color: Colors.deepPurpleAccent,
+                                      fontSize: 11.0,
+                                      fontWeight: FontWeight.w500,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            if (agent['traits'] != null) ...[
-                              const SizedBox(height: 8.0),
-                              Wrap(
-                                spacing: 6.0,
-                                runSpacing: 4.0,
-                                children: (agent['traits'] as List<dynamic>).map((trait) {
+                                // Map out all the Amber Trait Badges right next to it
+                                ...traitsList.map((trait) {
                                   return Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
                                     decoration: BoxDecoration(
@@ -180,9 +185,9 @@ class _AgentGalleryScreenState extends ConsumerState<AgentGalleryScreen> {
                                       ),
                                     ),
                                   );
-                                }).toList(),
-                              ),
-                            ],
+                                }),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -194,7 +199,6 @@ class _AgentGalleryScreenState extends ConsumerState<AgentGalleryScreen> {
                     spacing: 16.0,
                     runSpacing: 8.0,
                     children: skills.entries.map((entry) {
-                      // Grab short prefix name representation matching UI mockups
                       String label = entry.key.toUpperCase();
                       if (label.length > 3) {
                         label = label.substring(0, 3);
