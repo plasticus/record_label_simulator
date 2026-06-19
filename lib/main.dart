@@ -135,7 +135,7 @@ class _MainShellState extends State<MainShell> {
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.people_rounded),
-                label: 'Agents',
+                label: 'agents',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.album_rounded),
