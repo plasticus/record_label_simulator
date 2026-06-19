@@ -1,233 +1,183 @@
-// lib/screens/gallery/agent_gallery_screen.dart
+// // ... existing imports ...
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../models/band_manager.dart';
-import '../../providers/band_manager_provider.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
-// ─── AGENT GALLERY SCREEN ────────────────────────────────────────────────────
-// The Rogue's Gallery. Shows all active agents.
-// Consuming bandManagerProvider — no more raw JSON loading in initState.
+// lib/screens/gallery/agent_gallery_screen.dart
 
-class AgentGalleryScreen extends ConsumerWidget {
+class AgentGalleryScreen extends StatefulWidget {
   const AgentGalleryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final managersAsync = ref.watch(bandManagerProvider);
+  State<AgentGalleryScreen> createState() => _AgentGalleryScreenState();
+}
+
+class _AgentGalleryScreenState extends State<AgentGalleryScreen> {
+  List<dynamic> _randomAgents = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRandomAgents();
+  }
+
+  Future<void> _loadRandomAgents() async {
+    try {
+      // Pulling directly from your existing json file asset seen in image_90fbec.jpg
+      final String response = await rootBundle.loadString('assets/data/band_managers.json');
+      final List<dynamic> data = json.decode(response);
+
+      if (data.isNotEmpty) {
+        // Shuffle the real roster deck and carve out exactly 5 items
+        final List<dynamic> shuffled = List.from(data)..shuffle();
+        _randomAgents = shuffled.take(5).toList();
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        body: Center(child: Text('Gnarly error loading data: $_error')),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AGENTS'),
+        title: const Text('Agent Gallery'),
       ),
-      body: managersAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Text(
-            'Gnarly error loading agents:\n$e',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFFCF4E4E)),
-          ),
-        ),
-        data: (managers) => managers.isEmpty
-            ? const _EmptyGallery()
-            : ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: managers.length,
-          itemBuilder: (context, index) =>
-              _AgentCard(manager: managers[index]),
-        ),
-      ),
-    );
-  }
-}
+      body: _randomAgents.isEmpty
+          ? const Center(child: Text('No managers found in the file.'))
+          : ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemCount: _randomAgents.length,
+        itemBuilder: (context, index) {
+          final agent = _randomAgents[index];
+          // Accessing the nested skills map directly from your JSON blueprint
+          final Map<String, dynamic> skills = agent['skills'] ?? {};
 
-// ─── AGENT CARD ──────────────────────────────────────────────────────────────
+          // Clean up the name to match your asset file naming convention (e.g., "Priya Osei" -> "priyaosei")
+          final String rawName = agent['name'] ?? 'unknown';
+          final String sanitizedName = rawName.replaceAll(' ', '').toLowerCase();
+          final String assetPath = 'assets/images/agents/$sanitizedName.png';
 
-class _AgentCard extends StatelessWidget {
-  final BandManager manager;
-  const _AgentCard({required this.manager});
-
-  @override
-  Widget build(BuildContext context) {
-    final skills = manager.skills;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF252525)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Name + morale ──
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  manager.name,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFE8B84B),
-                  ),
-                ),
-                _MoraleChip(morale: manager.morale),
-              ],
-            ),
-            const SizedBox(height: 4),
-
-            // ── Personality + role ──
-            Text(
-              manager.personality.name,
-              style: const TextStyle(
-                color: Color(0xFF888888),
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // ── Skills grid ──
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: [
-                _SkillCell('ACU', skills.acumen),
-                _SkillCell('INS', skills.insight),
-                _SkillCell('RES', skills.resolve),
-                _SkillCell('PRE', skills.presence),
-                _SkillCell('EXE', skills.execution),
-                _SkillCell('NET', skills.network),
-              ],
-            ),
-
-            // ── Warning badges ──
-            if (manager.isUnderPerforming || manager.isBurningOut) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
+          return Card(
+            margin: const EdgeInsets.only(bottom: 16.0),
+            elevation: 4.0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (manager.isUnderPerforming)
-                    _Badge('UNDERPERFORMING', const Color(0xFFCF4E4E)),
-                  if (manager.isBurningOut)
-                    _Badge('BURNING OUT', const Color(0xFFE8884B)),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Agent Profile Image Avatar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: Image.asset(
+                          assetPath,
+                          width: 60.0,
+                          height: 60.0,
+                          fit: BoxFit.cover,
+                          // Fallback check in case an asset is missing or misspelled
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 60.0,
+                              height: 60.0,
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.person, color: Colors.grey),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16.0),
+                      // Name and Personality Details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              agent['name'] ?? 'Unknown Agent',
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4.0),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Personality: ${agent['personality'] ?? 'Normal'}',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: Colors.grey[600],
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                                Text(
+                                  'Morale: ${agent['morale']?.toString() ?? '100'}',
+                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24.0),
+                  Wrap(
+                    spacing: 16.0,
+                    runSpacing: 8.0,
+                    children: skills.entries.map((entry) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.key.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 11.0,
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            '${entry.value}',
+                            style: const TextStyle(
+                              fontSize: 15.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
                 ],
               ),
-            ],
-          ],
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 }
-
-// ─── SHARED SMALL WIDGETS ────────────────────────────────────────────────────
-
-class _MoraleChip extends StatelessWidget {
-  final double morale;
-  const _MoraleChip({required this.morale});
-
-  Color get _color {
-    if (morale >= 70) return const Color(0xFF4BB8A0);
-    if (morale >= 40) return const Color(0xFFE8B84B);
-    return const Color(0xFFCF4E4E);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: _color.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        'Morale ${morale.toStringAsFixed(0)}',
-        style: TextStyle(
-          color: _color,
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
-class _SkillCell extends StatelessWidget {
-  final String label;
-  final double value;
-  const _SkillCell(this.label, this.value);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: const TextStyle(
-                color: Color(0xFF555555),
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.0)),
-        Text(value.toStringAsFixed(1),
-            style: const TextStyle(
-                color: Color(0xFFCCCCCC),
-                fontSize: 14,
-                fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _Badge(this.label, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: Text(label,
-          style: TextStyle(
-              color: color, fontSize: 10, fontWeight: FontWeight.bold)),
-    );
-  }
-}
-
-// ─── EMPTY STATE ─────────────────────────────────────────────────────────────
-
-class _EmptyGallery extends StatelessWidget {
-  const _EmptyGallery();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Icon(Icons.people_outline_rounded,
-            size: 48, color: Color(0xFF333333)),
-        const SizedBox(height: 16),
-        const Text('No agents yet.',
-            style: TextStyle(
-                color: Color(0xFF555555),
-                fontSize: 16,
-                fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        Text('Hire someone on JF.fart to get started.',
-            style: TextStyle(
-                color: const Color(0xFF555555).withValues(alpha: 0.7),
-                fontSize: 13)),
-      ],
-    );
-  }
-}
+// // end of screen class definition
