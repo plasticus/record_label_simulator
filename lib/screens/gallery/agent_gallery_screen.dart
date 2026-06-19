@@ -71,7 +71,7 @@ class _AgentGalleryScreenState extends ConsumerState<AgentGalleryScreen> {
           final agent = _randomAgents[index];
           final Map<String, dynamic> skills = agent['skills'] ?? {};
 
-          // Dynamic asset parsing that handles casing, spaces, and character encoding bugs like 'ã'
+          // Dynamic asset parsing that handles casing, spaces, and character variations safely
           final String rawName = agent['name'] ?? 'unknown';
           final String sanitizedName = rawName.replaceAll(' ', '').toLowerCase().replaceAll('ã', 'a');
           final String assetPath = 'assets/images/agents/$sanitizedName.png';
@@ -139,14 +139,50 @@ class _AgentGalleryScreenState extends ConsumerState<AgentGalleryScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4.0),
-                            Text(
-                              agent['personality'] ?? 'normal',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Colors.grey[500],
-                                fontStyle: FontStyle.italic,
+                            const SizedBox(height: 6.0),
+                            // Stylized Personality Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                              decoration: BoxDecoration(
+                                color: Colors.deepPurple.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4.0),
+                                border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.35)),
+                              ),
+                              child: Text(
+                                agent['personality'] ?? 'normal',
+                                style: const TextStyle(
+                                  color: Colors.deepPurpleAccent,
+                                  fontSize: 11.0,
+                                  fontWeight: FontWeight.w500,
+                                  fontStyle: FontStyle.italic,
+                                ),
                               ),
                             ),
+                            if (agent['traits'] != null) ...[
+                              const SizedBox(height: 8.0),
+                              Wrap(
+                                spacing: 6.0,
+                                runSpacing: 4.0,
+                                children: (agent['traits'] as List<dynamic>).map((trait) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(4.0),
+                                      border: Border.all(color: Colors.amber.withValues(alpha: 0.25)),
+                                    ),
+                                    child: Text(
+                                      '$trait',
+                                      style: const TextStyle(
+                                        color: Colors.amberAccent,
+                                        fontSize: 10.0,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
                           ],
                         ),
                       ),
