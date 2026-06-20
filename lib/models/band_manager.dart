@@ -4,7 +4,7 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
 
-import '../generators/band_generator.dart';
+import 'band.dart';
 import 'agent.dart'; // AgentSkills lives here now
 
 // ---------------------------------------------------------------------------
