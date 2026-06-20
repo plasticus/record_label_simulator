@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/band.dart';
 import '../generators/band_generator.dart';
 
 class BandGenDevScreen extends StatefulWidget {
